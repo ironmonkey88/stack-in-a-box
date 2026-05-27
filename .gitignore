@@ -1,0 +1,52 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Bash / editor scratch
+*.swp
+*.swo
+*.bak
+*~
+.DS_Store
+
+# Runtime / install artifacts
+logs/
+data/
+scratch/
+*.duckdb
+*.duckdb.wal
+*.duckdb-shm
+*.duckdb-tmp
+
+# Credentials — must never be committed
+.env
+.env.*
+!.env.example
+secrets.yml
+secrets.yaml
+*.pem
+*.key
+
+# dbt
+.dbt/profiles.yml
+target/
+dbt_packages/
+logs/
+
+# Oxygen runtime state
+.oxy_state/
+
+# nginx / systemd / config substitutions
+config.yml
+!config.example.yml
+
+# IDE
+.idea/
+.vscode/
+*.iml
