@@ -13,7 +13,7 @@ The repo has a hierarchy of documents — read in this order:
 
 **Strategic + construction (authorities):**
 - `STANDARDS.md` — "done done" gates by medallion tier; sign-off checklists. The build's quality contract.
-- `DASHBOARDS.md` — design standard for analyst-facing + resident-facing dashboards.
+- `DASHBOARDS.md` — design standard for analyst-facing + end-user-facing dashboards.
 - `PROMPTS.md` — the shape every Chat-to-Code prompt takes (coding vs. information) and the 9-step receipt workflow Claude runs on every prompt.
 
 **Operational (this file and downstream):**
@@ -262,7 +262,7 @@ The closing ritual is short. One question, then wait. Don't lecture.
 
 ## §10 — Known gotchas
 
-These accumulate over time as the project encounters them. The starter set (lifted from `oxygen-mvp`'s LOG.md as load-bearing patterns):
+These accumulate over time as the project encounters them. The starter set covers known load-bearing operational patterns the v4 scripts depend on:
 
 - **`/etc/environment` for env vars, NOT `~/.bashrc`.** Non-interactive SSH (`ssh ec2 'cmd'`) does not read `~/.bashrc` — Ubuntu's default `.bashrc` early-returns. `/etc/environment` is read by PAM at session setup and works for both login and non-login shells. Format: literal `KEY=VALUE`, no `export`, no quotes, no shell expansion.
 - **Tailscale `--ssh=false` is load-bearing.** Tailscale SSH preempts port 22 for Tailnet peers via tailscaled, bypassing OpenSSH PAM — silently breaking `/etc/environment` env-var loading. Always pass `--ssh=false` on `tailscale up`.

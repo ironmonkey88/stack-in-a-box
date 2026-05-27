@@ -2,7 +2,7 @@
 
 This is the *why beneath the why*. Not operational — `STANDARDS.md` and `CLAUDE.md` are the authorities on what to do and how. Consult this doc as a tiebreaker when a design question is genuinely open.
 
-The principles below were earned over real work, in a sibling project ([`oxygen-mvp`](https://github.com/ironmonkey88/oxygen-mvp)) building a civic-analytics platform for Somerville, MA open data. They transferred here because they're not Somerville-specific — they're properties of any honest data platform.
+The principles below are properties of any honest data platform, not specific to a particular dataset or domain.
 
 ---
 
@@ -50,7 +50,7 @@ The warehouse remembers everything that happened to it.
 
 These tables are the audit trail. Any change to the platform that doesn't write to one of these surfaces is invisible. *If the warehouse doesn't remember it, it didn't happen.*
 
-This isn't paranoia — it's the price of operating a platform that produces answers people will act on. The analyst asking "is this data up to date?" deserves a SQL-queryable answer, not "yeah I think so."
+This isn't paranoia — it's the price of operating a platform that produces answers people will act on. The user asking "is this data up to date?" deserves a SQL-queryable answer, not "yeah I think so."
 
 ---
 
@@ -104,7 +104,7 @@ The chat agent's reply must always carry:
 1. **Row count.** "Returned N rows."
 2. **Answer.** Two to four sentences of plain prose, stating the number or finding directly. No marketing tone. No paraphrasing the methodology away.
 3. **Citations.** Every source table referenced (qualified: `main_gold.fct_<entity>`), every semantic-layer view, every limitations entry whose `affects:` list matches a column / view / measure / table the answer used.
-4. **Known limitations affecting this answer.** Only present if at least one limitation surfaced in citations. One to two sentences each, naming the limitation by title and stating the analyst-facing impact.
+4. **Known limitations affecting this answer.** Only present if at least one limitation surfaced in citations. One to two sentences each, naming the limitation by title and stating the user-facing impact.
 
 Hard rules:
 
@@ -114,7 +114,7 @@ Hard rules:
 - Never soften or omit limitations when they apply.
 - Never state a calendar year in prose unless the SQL queried it. Knowledge cutoffs are a real failure mode; the database is the source of truth for the current date.
 
-The trust contract is the user's protection against the platform telling them something false. It costs the agent ~3 extra paragraphs per reply. It earns the analyst's trust.
+The trust contract is the user's protection against the platform telling them something false. It costs the agent ~3 extra paragraphs per reply. It earns the user's trust.
 
 ---
 
@@ -122,26 +122,10 @@ The trust contract is the user's protection against the platform telling them so
 
 Some constraints are not in the trade-off space. The specific constraints depend on what the platform is being used for; each implementation must identify its own — the discipline is naming them explicitly, not pretending they don't exist.
 
-Examples from the lineage:
+Examples:
 
 - **k-anonymity on survey/demographic data.** Thin cells (a single respondent or two identifiable by demographic intersection) are protected by absence — the dimensions aren't surfaced in gold rather than relying on suppression logic that can be defeated.
-- **PII redaction in silver.** Names, emails, addresses redacted at the silver tier before any analyst-facing surface touches them.
+- **PII redaction in silver.** Names, emails, addresses redacted at the silver tier before any user-facing surface touches them.
 - **Honest reporting on uncertainty.** When the data can't answer the question, the agent says so. It does not invent confidence.
 
 When you build your own platform on this discipline, identify your boundary constraints early. Name them. Don't pretend they're trade-offs. Trade-offs imply you might trade them away under pressure; boundary constraints are the ones you don't.
-
----
-
-## Sources of the discipline
-
-The seven principles above are not invented — they're earned. The lineage:
-
-- **Working backwards from problems** — Amazon's product-development discipline, naturalized to data platforms via the user-story shape of `PROMPTS.md` coding requests.
-- **Stages with verification** — systems engineering's V-model, adapted to the medallion architecture's bronze/silver/gold tiers.
-- **Durability through metadata** — operational data warehouse practice, sharpened by [`oxygen-mvp`](https://github.com/ironmonkey88/oxygen-mvp) Plans 1a and 1b (the admin observability layer).
-- **Honest reporting** — earned from real misdiagnoses in `oxygen-mvp` sessions (specifically Sessions 41-42, which root-caused a dashboard error after two prior sessions papered over the symptom).
-- **Modular by design** — software engineering's separation of concerns, applied to the discipline-vs-implementation split.
-- **Trust contract on every answer** — `oxygen-mvp` Plan 6 ("Answer Agent + Trust Contract"), the project's signature discipline.
-- **Boundary constraints not in the trade-off space** — `oxygen-mvp`'s PHILOSOPHY.md §5, generalized.
-
-Reading the source histories teaches the discipline more deeply than reading this doc. This doc is the summary. The source is the work.

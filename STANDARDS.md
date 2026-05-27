@@ -119,7 +119,7 @@ Pattern:
 - `test_page(url, assertions, screenshot_path) -> TestResult` — pass/fail assertions on a rendered DOM.
 - `review_page(url, output_dir, focus) -> ReviewArtifact` — capture screenshot + annotated screenshot + network log + window globals + DOM samples for a design review.
 
-A rendered-page tool earns its keep on any project that ships analyst-facing surfaces. The reference implementation in `oxygen-mvp` uses Playwright + Pillow; alternatives are fine if they deliver the same evidence shape.
+A rendered-page tool earns its keep on any project that ships analyst-facing surfaces. The reference toolchain is Playwright + Pillow; alternatives are fine if they deliver the same evidence shape.
 
 > **Status note:** this section's reference implementation will be added when the first dashboard plan ships in this repo.
 

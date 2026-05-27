@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 05_clone_and_config.sh — clone the template repo, capture API key,
-# write /etc/environment correctly (the single biggest source of pain
-# in the Somerville project — Sessions 12 + 13 lost most of a day to this).
+# write /etc/environment correctly (a notoriously easy step to get wrong
+# under non-interactive SSH — see comments below for the why).
 #
 # Idempotent: re-cloning is skipped if the working tree exists.
 # Re-running the env-var write is safe (append_line_if_missing).

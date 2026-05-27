@@ -4,7 +4,7 @@ These are extracted from `STACK_IN_A_BOX_PLAN.md` §5 and surfaced here as a ded
 
 Each decision is named with its framing, Chat's lean (from the v4 handoff), and rationale. **None are resolved.** A future Chat-side session works through them; a follow-up Code session bakes the resolutions into the scripts + docs.
 
-> **Status: NOT YET RESOLVED.** As of repo creation (2026-05-27, via `oxygen-mvp` Plan 46). Until these are resolved, the scripts in `scripts/setup/` carry the v4 defaults — which are defensible placeholders, not decisions.
+> **Status: NOT YET RESOLVED.** As of repo creation (2026-05-27). Until these are resolved, the scripts in `scripts/setup/` carry the v4 defaults — which are defensible placeholders, not decisions.
 
 ---
 
@@ -24,7 +24,7 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 
 ## Decision #2 — Smoke-test data source
 
-**Framing:** The smoke-test pipeline pulls real data to prove the platform works end-to-end. The default is **NYC 311 service requests** (SODA API, `https://data.cityofnewyork.us/resource/erm2-nwe9.json`). 90% pipeline-shape reuse from Somerville (which also pulls 311 from a SODA endpoint).
+**Framing:** The smoke-test pipeline pulls real data to prove the platform works end-to-end. The default is **NYC 311 service requests** (SODA API, `https://data.cityofnewyork.us/resource/erm2-nwe9.json`). Clean endpoint, well-documented schema, generous rate limits — a low-friction live source for the smoke test.
 
 **Alternatives:**
 
@@ -68,7 +68,7 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 
 **Alternative:** Pin to a known-good Oxygen version, replacing the installer URL with a versioned tarball or release-tagged installer URL.
 
-**Chat's lean:** Pin to the version `oxygen-mvp` is running today (whatever's current per Session 30+ — Code should verify). Document the upgrade path.
+**Chat's lean:** Pin to a known-good Oxygen version at template publish time. Document the upgrade path.
 
 **Why pin:** reproducibility. A template repo's value-prop is "install this and it works." If Oxygen ships a breaking change tomorrow, the template breaks for every new user until the maintainer updates the URL. Pinning makes the template stable; upgrades are explicit.
 

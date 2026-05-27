@@ -182,8 +182,7 @@ The Answer Agent should reply with:
     - a citation to main_gold.fct_smoke_test or a semantic-layer view
 
 If you see all three, the box is fully wired and the trust contract is intact.
-This is the equivalent of Somerville's "113,961 with full trust contract"
-sign-off moment.
+This is the sign-off moment: a real query, a real number, with full receipts.
 
 If the chat returns an error or no SQL artifact, check:
     sudo journalctl -u oxy.service -n 100 --no-pager

@@ -113,8 +113,8 @@ verify_gate() {
         failures=$((failures + 1))
     fi
 
-    # python-ulid importable (we hit this in Somerville Session 29 with the
-    # 1.x → 3.x API change; verifying import works guards against the next one)
+    # python-ulid importable — the 1.x → 3.x API change has bitten before;
+    # verifying import + constructor works guards against the next one.
     if "$VENV_DIR/bin/python" -c "from ulid import ULID; ULID()" >/dev/null 2>&1; then
         log_ok "python-ulid: import + ULID() construct OK"
     else

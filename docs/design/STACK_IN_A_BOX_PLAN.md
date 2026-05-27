@@ -2,7 +2,7 @@
 
 **Audience:** Code (executor) and the user (decisions). Chat (architect) wrote it.
 
-**Premise:** Take the proven Somerville stack — EC2 + Docker + Oxygen + Python + dlt + dbt-duckdb + Tailscale + nginx + systemd + the run.sh contract + the admin observability layer + the five portal generators — and extract it into a deployable template. A fresh EC2 with credentials in hand reaches "ask the chat a question, get an answer with a trust contract" in 35–55 minutes.
+**Premise:** Package a proven analytics stack — EC2 + Docker + Oxygen + Python + dlt + dbt-duckdb + Tailscale + nginx + systemd + the run.sh contract + the admin observability layer + the five portal generators — as a deployable template. A fresh EC2 with credentials in hand reaches "ask the chat a question, get an answer with a trust contract" in 35–55 minutes.
 
 **Out of scope for this plan:** Postgres/Snowflake support, Kubernetes, multi-workspace Oxygen mode, HTTPS, a Magic Link auth flow, a scaffolding command (`make new-pipeline`). All of those are post-template work.
 
@@ -55,7 +55,7 @@ A pre-flight check in `00_preflight.sh` (optional, called by `bootstrap.sh`) ver
 
 1. `apt update && apt upgrade -y` — fully patch the box. Reboots if the kernel updated.
 2. `apt install -y` the base packages: `git`, `curl`, `wget`, `unzip`, `gcc`, `g++`, `make`, `software-properties-common`, `ufw`, `apache2-utils`, `python3.12`, `python3.12-venv`, `python3.12-dev`. The Oxygen docs list a similar set; `apache2-utils` is added for `htpasswd` (Basic Auth on `/chat` later — even though this plan defers that step, the binary is cheap to install).
-3. `chmod 755 /home/ubuntu` — load-bearing for nginx www-data to traverse to in-repo dbt docs. The Somerville project hit this in Session 13; the box pre-empts it.
+3. `chmod 755 /home/ubuntu` — load-bearing for nginx www-data to traverse to in-repo dbt docs. The box pre-empts the default-mode-750 footgun.
 4. `mkdir -p /home/ubuntu/stack-in-a-box/{data,scratch}` — scaffold the working directories the rest of the install populates.
 5. UFW base posture: allow 22, allow 80, deny everything else. SG rules at AWS layer are stricter; this is defense-in-depth.
 
@@ -71,7 +71,7 @@ A pre-flight check in `00_preflight.sh` (optional, called by `bootstrap.sh`) ver
 - Slow apt mirror — `set -e` will halt; surface "this is mirror speed, not script bug." Retry-friendly: the script is idempotent.
 - Kernel update reboot — script exits 100 with "rebooting, rerun me when SSH comes back." `bootstrap.sh` knows to wait + retry.
 
-**Pattern source:** Oxygen's `create-machine.md` deployment doc + Somerville's pain in `/home/ubuntu` 750→755 (Session 13).
+**Pattern source:** Oxygen's `create-machine.md` deployment doc + the `/home/ubuntu` 750→755 gotcha.
 
 ### 02 — `02_install_docker.sh`
 
@@ -81,7 +81,7 @@ A pre-flight check in `00_preflight.sh` (optional, called by `bootstrap.sh`) ver
 
 **Verify gate:** `docker --version`, `docker ps` succeeds, `systemctl is-enabled docker` returns "enabled".
 
-**Pattern source:** Somerville `SETUP.md` §2 + Oxygen's container-runtimes doc.
+**Pattern source:** Oxygen's container-runtimes doc + the standard Docker official-install one-liner.
 
 ### 03 — `03_install_oxygen.sh`
 
@@ -115,7 +115,7 @@ requests>=2.31
 
 1. `git clone https://github.com/<org>/stack-in-a-box.git`.
 2. Prompt: paste Anthropic API key (read without echo, validate `sk-ant-` prefix).
-3. Write to `/etc/environment`: `ANTHROPIC_API_KEY=<pasted>` + `OXY_DATABASE_URL=postgresql://...`. No `export`, no quotes, no shell expansion. **Critical detail from Somerville Session 13.**
+3. Write to `/etc/environment`: `ANTHROPIC_API_KEY=<pasted>` + `OXY_DATABASE_URL=postgresql://...`. No `export`, no quotes, no shell expansion. **Critical format detail** — `/etc/environment` is read by PAM as literal `KEY=VALUE` lines.
 4. Extend the existing `PATH=` line via `sed` to include `~/.local/bin` and the venv bin.
 5. `cp config.example.yml config.yml` + templated-substitute.
 6. `cp dbt/profiles.example.yml ~/.dbt/profiles.yml` + templated-substitute.
@@ -126,7 +126,7 @@ requests>=2.31
 
 **Goal:** Install Tailscale, join the user's Tailnet, repoint SSH to the Tailnet hostname.
 
-**What it does:** Install Tailscale → prompt for single-use auth key → `sudo tailscale up --authkey=$KEY --hostname=stack-in-a-box --ssh=false`. **Critical: `--ssh=false`.** Tailscale SSH bypasses OpenSSH PAM, which breaks `/etc/environment` env-var loading (Somerville Sessions 12 and 13 lost half a day to this).
+**What it does:** Install Tailscale → prompt for single-use auth key → `sudo tailscale up --authkey=$KEY --hostname=stack-in-a-box --ssh=false`. **Critical: `--ssh=false`.** Tailscale SSH bypasses OpenSSH PAM, which silently breaks `/etc/environment` env-var loading.
 
 **The big one:** if Tailnet SSH doesn't work *before* the user closes public SSH, they lock themselves out. The script explicitly does not close the SG itself — it prints instructions and forces the user to verify.
 
@@ -140,7 +140,7 @@ requests>=2.31
 
 **Goal:** Install the four systemd units (`oxy.service`, `pipeline-refresh.timer/service`, `source-health-check.timer/service`, `profile-tables.timer/service`), enable them.
 
-**The reboot-race-condition class:** `oxy.service` *must* have `After=docker.service` and `Requires=docker.service`. The Somerville project hit this on Session 24; the unit files in the template are pre-hardened.
+**The reboot-race-condition class:** `oxy.service` *must* have `After=docker.service` and `Requires=docker.service`. The unit files in the template are pre-hardened against the race.
 
 ### 09 — `09_first_run.sh`
 
@@ -162,7 +162,7 @@ requests>=2.31
 
 ## 4. What the Template Repo Looks Like
 
-Anchored on the Somerville structure, with the dataset-specific content tokenized or removed:
+Anchored on a proven structure, with the dataset-specific content tokenized or removed:
 
 ```
 stack-in-a-box/
@@ -198,13 +198,13 @@ Five questions worth resolving before scripts go to production:
 
 **Q1. Tailscale required, or optional?**
 
-- *Required* — cleanest security posture; matches Somerville. Cost: user needs a free Tailscale account.
+- *Required* — cleanest security posture. Cost: user needs a free Tailscale account.
 - *Optional* — script 06 becomes "either Tailscale OR Basic Auth on `:3000`." Doubles the surface area of scripts 06 + 07.
 - **Chat's lean:** required.
 
 **Q2. Smoke-test data: NYC 311 (preferred), USGS Earthquakes, or something else?**
 
-- NYC 311: 90% pipeline-shape reuse from Somerville; one config file change.
+- NYC 311: clean SODA endpoint, well-documented schema, generous rate limits; one config file change to point the dlt pipeline at it.
 - USGS: different API shape, validates the template isn't accidentally SODA-coupled.
 - **Chat's lean:** NYC 311 for v1, document "swap in any SODA dataset by changing 3 lines."
 
@@ -218,7 +218,7 @@ Five questions worth resolving before scripts go to production:
 
 - *Latest:* always current, may break with upstream changes.
 - *Pin:* reproducible installs, but the template ages.
-- **Chat's lean:** pin to the version oxygen-mvp is running today.
+- **Chat's lean:** pin to a known-good Oxygen version at template publish time.
 
 **Q5. Project name for the template repo?**
 
@@ -233,14 +233,14 @@ Plan-to-shipped: **~40 hours, ~10 sessions, ~10 days calendar.**
 
 | Block | Hours |
 |---|---|
-| Fork Somerville, strip dataset-specific content, tokenize | 4–6 |
+| Strip dataset-specific content, tokenize the templates | 4–6 |
 | Write 10 setup scripts | 10–14 |
 | Build smoke-test pipeline (dlt + bronze + gold + view + topic + agent prompt) | 5–7 |
 | Parameterize `run.sh` + admin tables + generators for the smoke schema | 4–6 |
 | First-boot portal, README, QUICKSTART, HARDENING, SWAP_IN_YOUR_DATA | 5–8 |
 | Test on a fresh EC2 (the one thing we forgot) | 8–10 |
 
-Last row is non-negotiable. Every plan in the Somerville LOG.md hit one assumption nobody coded for. The box is no different.
+Last row is non-negotiable. Every real install hits one assumption nobody coded for. The box is no different.
 
 ---
 
@@ -266,9 +266,9 @@ That's the product.
 
 Explicitly out of scope, to be addressed in follow-up plans:
 
-- **Multi-workspace Oxygen mode** — requires Oxygen's wizard to grow an "existing DuckDB" path. Same blocker as Somerville's MVP 4.
+- **Multi-workspace Oxygen mode** — requires Oxygen's wizard to grow an "existing DuckDB" path.
 - **HTTPS** — Caddy or Let's Encrypt + nginx. Documented in `HARDENING.md`.
-- **Basic Auth on `/chat`** — MVP 1.5 pattern from Somerville. Documented in `HARDENING.md`.
+- **Basic Auth on `/chat`** — nginx + htpasswd. Documented in `HARDENING.md`.
 - **Backups** — DuckDB file snapshots. Documented in `HARDENING.md`.
 - **Multi-source pipelines** — the template ships one smoke-test source.
 - **Alternative warehouses** — Postgres, Snowflake, BigQuery.

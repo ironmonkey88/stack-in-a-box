@@ -2,7 +2,7 @@
 
 This file is thin at v1. It will fill out as the project accumulates dashboards.
 
-The shape below preserves the structural skeleton from the sibling project's discipline. Sections marked with **(future)** will be populated when this project ships its first dashboard.
+The shape below preserves the structural skeleton the discipline calls for. Sections marked with **(future)** will be populated when this project ships its first dashboard.
 
 ---
 
@@ -11,7 +11,7 @@ The shape below preserves the structural skeleton from the sibling project's dis
 Dashboards in this platform serve two distinct audiences:
 
 - **Analysts** — people who need to drill into the data, ask "why," and follow chains of evidence. Analyst dashboards are dense, comprehensive, and include trust-contract receipts on every metric.
-- **Residents (or other end-users)** — people who need a verdict and the context that makes it interpretable. Resident dashboards lead with the verdict and surface the question/method/limitations as supporting layers.
+- **End-users** — people who need a verdict and the context that makes it interpretable. End-user dashboards lead with the verdict and surface the question/method/limitations as supporting layers.
 
 These two styles are not opposed — they're for different audiences with different decision contexts. The same data can drive both.
 
@@ -36,11 +36,11 @@ Analyst dashboards typically organize into four tiers:
 
 The four-tier structure is a pattern, not a mandate — some dashboards naturally have three tiers, some have five. The structure helps the analyst know where to look.
 
-Full tier conventions will be defined when the first analyst dashboard ships in this project. Until then, refer to the [`oxygen-mvp` DASHBOARDS.md](https://github.com/ironmonkey88/oxygen-mvp/blob/main/DASHBOARDS.md) for the reference implementation.
+Full tier conventions will be defined when the first analyst dashboard ships in this project.
 
-## 4. Resident dashboards: verdict-first family **(future)**
+## 4. End-user dashboards: verdict-first family **(future)**
 
-For resident-facing dashboards, the verdict-first family is the recommended template:
+For end-user-facing dashboards, the verdict-first family is the recommended template:
 
 - **Verdict step** — the one-sentence answer with directional framing (good/bad/mixed) calibrated to the data.
 - **Recent-situation layer** — what the data actually shows, in plain language.
@@ -48,7 +48,7 @@ For resident-facing dashboards, the verdict-first family is the recommended temp
 - **Limitations step** — the relevant limitations, stated plainly.
 - **Deeper-dive link** — where to read more.
 
-The verdict-first family was developed in `oxygen-mvp` and lands in detail in that project's `DASHBOARDS.md` §9 + the `docs/dashboard-family-design-2026-05-22.md` family design doc. **Full family infrastructure is documented there.** Adapt as Stack-in-a-Box plans accumulate dashboards.
+Full family infrastructure (template, recurring layouts, common copy patterns) lands when this project ships its first end-user dashboard.
 
 ## 5. Trust-contract receipts on every metric
 
@@ -66,7 +66,7 @@ Each dashboard lives as a single `.app.yml` file at `apps/<name>.app.yml`. Metad
 
 ```yaml
 # title: <short human-readable title>
-# audience: <analyst | resident>
+# audience: <analyst | end-user>
 # topic: <semantic-layer topic the dashboard pulls from>
 # status: <stable | wip | deprecated>
 ```
@@ -82,7 +82,7 @@ Operator dashboards (e.g. a DBA-style admin page) are exempt from the public-das
 - They don't carry the same trust-contract receipts (operators read raw signals directly).
 - They live behind a network-level gate (Tailnet-only, not on the public portal).
 
-The carve-out is structural — operator dashboards solve a different problem from analyst/resident dashboards and operate under different constraints.
+The carve-out is structural — operator dashboards solve a different problem from analyst/end-user dashboards and operate under different constraints.
 
 ---
 

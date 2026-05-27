@@ -105,4 +105,4 @@ bootstrap.sh runs scripts 00–10 in order. **It stops twice for human action:**
 
 ---
 
-*v4 bundle landed in `stack-in-a-box` 2026-05-27 via oxygen-mvp Plan 46. Next plan in this repo: shellcheck pass + first real install on a fresh EC2.*
+*Next plan: shellcheck pass + first real install on a fresh EC2.*

@@ -8,7 +8,7 @@
 
 ## 1. What this project is
 
-**Stack-in-a-Box** is a new initiative — separate repo, not a Somerville fork — to extract the proven Somerville analytics stack into a deployable, dataset-agnostic template. The promise is "analytics stack in a box, just add data."
+**Stack-in-a-Box** packages a proven analytics stack into a deployable, dataset-agnostic template. The promise is "analytics stack in a box, just add data."
 
 The box includes:
 
@@ -89,30 +89,30 @@ Log of 11 dry-run review iterations. 79 issues surfaced, 33 real and fixed, 46 c
 
 ---
 
-## 4. Load-bearing patterns lifted from Somerville
+## 4. Load-bearing patterns encoded in the v4 bundle
 
-Every one of these is a hard-won lesson from Somerville's LOG.md, encoded into one line of bash in the v4 bundle:
+Every one of these is a hard-won operational lesson, encoded into one line of bash:
 
-| Pattern | Source |
+| Pattern | Why it matters |
 |---|---|
-| `/etc/environment` (not bashrc) for non-interactive SSH env vars | Somerville Session 13 |
-| `--ssh=false` on `tailscale up` | Somerville Sessions 12 + 13 |
-| User does AWS SG edit themselves (lockout protection) | Somerville Session 12 |
-| `/home/ubuntu` chmod 755 for nginx traversal | Somerville Session 13 |
-| Disable default nginx site explicitly | Somerville Session 12 |
-| `Requires=docker.service` + `After=docker.service` on oxy.service | Somerville Session 24 |
-| Captured-exit DQ contract in run.sh | Somerville Plan 3 D3 |
-| `pipeline_run_start/end.py` envelope | Somerville Plan 1a |
-| 10-stage run.sh contract | Somerville Plans 1a + 1b |
-| Poll `:3000` HTTP code (not `systemctl is-active`) for readiness | Dry-run iter 3 |
-| `curl -sI` not `curl -fsS` for preflight (4xx is reachable) | Dry-run iter 5 |
-| `flock` on bootstrap.sh to prevent concurrent installs | Dry-run iter 7 |
-| Wait for cloud-init before apt-get | Dry-run iter 7 |
-| `read_secret` accepts env-var override for non-interactive installs | Dry-run iter 4 |
-| `require_not_root` on scripts that write to $HOME | Dry-run iter 6 |
-| Position-based step-id filtering (not lex compare) for --from | Dry-run iter 1 |
-| `setsid` for the smoke test so it survives SSH disconnect | Dry-run iter 10 |
-| IMDSv2-based auto-detection of EC2 public IP for SG verification | Dry-run iter 9 |
+| `/etc/environment` (not bashrc) for non-interactive SSH env vars | `~/.bashrc` early-returns under `ssh host 'cmd'`; PAM reads `/etc/environment` |
+| `--ssh=false` on `tailscale up` | Tailscale SSH preempts OpenSSH PAM and silently breaks env-var loading |
+| User does AWS SG edit themselves (lockout protection) | Script-driven SG closure before Tailnet SSH verify = lockout |
+| `/home/ubuntu` chmod 755 for nginx traversal | Default Ubuntu mode 750 silently breaks docroot traversal |
+| Disable default nginx site explicitly | Default site's `/var/www/html` shadows the project docroot |
+| `Requires=docker.service` + `After=docker.service` on oxy.service | Otherwise oxy.service races docker on reboot and crashes |
+| Captured-exit DQ contract in run.sh | dbt test failures should surface visibly, not halt the pipeline |
+| `pipeline_run_start/end.py` envelope | Every run leaves an admin-table audit trail |
+| 10-stage run.sh contract | Stable contract analysts and operators can rely on |
+| Poll `:3000` HTTP code (not `systemctl is-active`) for readiness | "active" fires before the SPA actually listens; HTTP probe is the truth |
+| `curl -sI` not `curl -fsS` for preflight (4xx is reachable) | Bare-domain API endpoints commonly return 4xx without auth |
+| `flock` on bootstrap.sh to prevent concurrent installs | Concurrent installs race on apt locks and `/etc/environment` |
+| Wait for cloud-init before apt-get | Fresh EC2 cloud-init holds the dpkg lock for ~60-90s |
+| `read_secret` accepts env-var override for non-interactive installs | Unblocks CI / unattended install paths |
+| `require_not_root` on scripts that write to $HOME | `sudo bash bootstrap.sh` would put $HOME=/root and misconfigure |
+| Position-based step-id filtering (not lex compare) for --from | The STEPS array isn't in numeric order (05 before 04) |
+| `setsid` for the smoke test so it survives SSH disconnect | 8-25 minute pipelines shouldn't die when SSH drops |
+| IMDSv2-based auto-detection of EC2 public IP for SG verification | Final verify must fail loud if public ports are still open |
 
 ---
 
@@ -123,7 +123,7 @@ The v4 scripts ship with defensible defaults for all five. Any can be changed vi
 | # | Decision | Chat's default | Chat's lean |
 |---|---|---|---|
 | 1 | Tailscale required vs. optional | Required | Keep required (Basic Auth is a worse story) |
-| 2 | Smoke-test data source | NYC 311 SODA | Keep NYC 311 for v1 (90% pipeline reuse from Somerville) |
+| 2 | Smoke-test data source | NYC 311 SODA | Keep NYC 311 for v1 (clean SODA endpoint, well-documented schema, generous rate limits) |
 | 3 | Smoke test in main path vs. `examples/` | Main path with delete-me markers | Keep main path; cheapest path that earns the "in a box" framing |
 | 4 | Pin Oxygen version vs. `get.oxy.tech` latest | Latest (with TODO comment) | Pin at publish time once a known-good version is identified |
 | 5 | Repo name | `stack-in-a-box` placeholder | No strong opinion — the user's call |
@@ -201,9 +201,9 @@ These are referenced by the v4 scripts but live elsewhere in the template repo a
 | `scripts/profile_tables.py` + `check_profile_staleness.py` | profiling helpers |
 | `scripts/generate_metrics_page.py` etc. | 5 portal generators |
 | `scripts/build_limitations_index.py` | limitations registry |
-| `run.sh` | the 10-stage orchestrator (parameterized version of Somerville's) |
+| `run.sh` | the 10-stage orchestrator |
 
-Estimated effort for the second batch: ~10–14 hours, mostly tokenization and parameterization of Somerville's existing files.
+Estimated effort for the second batch: ~10–14 hours of tokenization, parameterization, and content authoring.
 
 ---
 
@@ -262,7 +262,7 @@ Every iteration's bugs passed `bash -n`. The bugs were only visible when asking,
 
 ## 13. Files for handoff
 
-All landed in the `stack-in-a-box` repo via `oxygen-mvp` Plan 46 (2026-05-27):
+All landed in the `stack-in-a-box` repo on 2026-05-27:
 
 - This doc — `docs/handoffs/2026-05-26-stack-in-a-box-v4-handoff.md`
 - `docs/design/STACK_IN_A_BOX_PLAN.md` — full design plan
@@ -272,4 +272,4 @@ All landed in the `stack-in-a-box` repo via `oxygen-mvp` Plan 46 (2026-05-27):
 
 ---
 
-*Handoff doc generated 2026-05-26. Landed in the stack-in-a-box repo via oxygen-mvp Plan 46 on 2026-05-27. Next session can pick up at §8 (next steps) without re-deriving context.*
+*Handoff doc generated 2026-05-26. Landed in the stack-in-a-box repo on 2026-05-27. Next session can pick up at §8 (next steps) without re-deriving context.*

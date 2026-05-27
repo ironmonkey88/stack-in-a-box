@@ -11,7 +11,7 @@
 #
 # Critical: oxy.service has After=docker.service + Requires=docker.service.
 # Without these, oxy.service races docker on reboot and crashes trying to
-# bring up the postgres container. Somerville Session 24 hard-learned this.
+# bring up the postgres container.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -156,7 +156,7 @@ verify_gate() {
         failures=$((failures + 1))
     fi
 
-    # Verify the dependency ordering is in the unit (Somerville S24 lesson)
+    # Verify the dependency ordering is in the unit
     if grep -q "Requires=docker.service" "$SYSTEMD_DST_DIR/oxy.service" 2>/dev/null \
         && grep -q "After=.*docker.service" "$SYSTEMD_DST_DIR/oxy.service" 2>/dev/null; then
         log_ok "oxy.service has correct docker.service dependency"

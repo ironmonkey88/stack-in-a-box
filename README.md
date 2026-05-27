@@ -2,7 +2,7 @@
 
 A reference implementation of a trustworthy data analytics platform — modular, durable, designed around working backwards from real problems.
 
-The repo holds two things: **a discipline** (how to build platforms that produce answers an analyst can trust) and **a reference implementation** (one valid instantiation of that discipline on EC2 + Docker + Oxygen + Python + dlt + dbt-duckdb + Tailscale + nginx + systemd). The discipline is the product. The implementation demonstrates how it plays out concretely. Anyone with different infrastructure can swap components and the platform still works because the design transfers, not the technology.
+The repo holds two things: **a discipline** (how to build platforms that produce answers users can trust) and **a reference implementation** (one valid instantiation of that discipline on EC2 + Docker + Oxygen + Python + dlt + dbt-duckdb + Tailscale + nginx + systemd). The discipline is the product. The implementation demonstrates how it plays out concretely. Anyone with different infrastructure can swap components and the platform still works because the design transfers, not the technology.
 
 > **Working placeholder name.** `stack-in-a-box` is one of five open design decisions tracked in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). A future plan resolves the name; until then, the placeholder is deliberate.
 
@@ -22,7 +22,7 @@ If you want to skip orientation and just run a script, this repo isn't for you. 
 | `PROMPTS.md` | The shape every coding/information request takes when handed to Claude, plus the 9-step receipt workflow Claude runs on every prompt. |
 | `PHILOSOPHY.md` | The principles the platform is built on — working backwards, stages with verification, durability through metadata, honest reporting, trust contract on every answer, modular by design. |
 | `STANDARDS.md` | The "done done" gates by layer (bronze/silver/gold/admin), file-organization rules, and project-state-document maintenance. |
-| `DASHBOARDS.md` | Design standard for analyst-facing and resident-facing dashboards. Thin in v1; fills out as the project accumulates dashboards. |
+| `DASHBOARDS.md` | Design standard for analyst-facing and end-user-facing dashboards. Thin in v1; fills out as the project accumulates dashboards. |
 | `LOG.md` | Captain's log — running record of sessions, decisions, blockers. Empty at repo creation; plans accumulate. |
 | `TASKS.md` | Task tracker — granular checkpoints with status markers. |
 | `scripts/setup/` | 13 v4 bash scripts that install the reference platform end-to-end on a fresh Ubuntu 24.04 ARM EC2 instance. Dry-run-validated (11 iterations); not yet executed on real EC2. |
@@ -51,11 +51,7 @@ When install + smoke verify complete, Claude returns to a working-backwards ques
 
 **Five design decisions remain open** — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). They need resolution before the first real install plan ships.
 
-**The 16 missing artifacts** named in handoff §9 (`run.sh`, `requirements.txt`, `config.example.yml`, dbt models, systemd units, etc.) are also pending. The setup scripts in `scripts/setup/` reference them; they land in a future plan ("the second batch" per the handoff).
-
-## How this connects to oxygen-mvp
-
-The discipline was earned through the [oxygen-mvp](https://github.com/ironmonkey88/oxygen-mvp) project — a civic-analytics platform for Somerville, MA open data, built over dozens of sessions and many plans. The patterns here (`/etc/environment` over `~/.bashrc`, `--ssh=false` on Tailscale, captured-exit DQ contract, trust contract on agent answers, the 10-stage run.sh shape, etc.) are lifted from that project's LOG.md. The v4 setup scripts cite specific sessions and plans in their comments — those citations are intentional: the discipline transfers, the lineage transfers with it.
+**Missing artifacts.** The setup scripts reference files that land in a future plan ("the second batch"): `run.sh`, `requirements.txt`, `config.example.yml`, dbt models, systemd units, semantic-layer YAML, agent YAML, portal generators. See `docs/design/STACK_IN_A_BOX_PLAN.md` §9 for the full list.
 
 ## License
 

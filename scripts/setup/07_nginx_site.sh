@@ -61,8 +61,9 @@ main() {
     log_ok "site enabled: $NGINX_SITE_ENABLED"
 
     # Disable the default site — its /var/www/html docroot is a footgun.
-    # Somerville Session 12 deployed to the wrong docroot for an hour
-    # before figuring out the default site was shadowing intent.
+    # Easy to spend an hour wondering why nginx is serving the welcome
+    # page instead of the project portal: it's because the default site
+    # is still enabled and matching first.
     if [[ -L /etc/nginx/sites-enabled/default ]]; then
         log_info "disabling default site (was shadowing our docroot)..."
         sudo rm -f /etc/nginx/sites-enabled/default

@@ -9,9 +9,8 @@
 # Idempotent: detects existing Tailscale install + join, skips if already up.
 #
 # Critical: --ssh=false. Tailscale SSH bypasses OpenSSH's PAM stack,
-# which silently breaks /etc/environment env-var loading. The Somerville
-# project lost most of Session 13 to this; never re-enable Tailscale SSH
-# without also fixing the env-var path.
+# which silently breaks /etc/environment env-var loading. Never re-enable
+# Tailscale SSH without also fixing the env-var path.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -64,7 +63,6 @@ main() {
         # CRITICAL: --ssh=false. Tailscale SSH preempts port 22 for
         # Tailnet peers via tailscaled be-child, bypassing OpenSSH PAM
         # and silently breaking /etc/environment env-var loading.
-        # See Somerville LOG.md 2026-05-08 16:45 ET and Session 13.
         log_info "running: tailscale up --hostname=$hostname --ssh=false"
         if ! sudo tailscale up \
                 --authkey="$authkey" \
