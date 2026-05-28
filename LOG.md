@@ -24,7 +24,7 @@
 
 **Active blockers:** None.
 
-**Last Updated:** 2026-05-27 (Session 1 — Plan 1 done).
+**Last Updated:** 2026-05-28 (post-Plan-1 follow-up — 3 more flow dry-runs F6-F8 in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md): F6 forward contract check (highest-value — pins the second-batch interface: exact table names, DuckDB path, token whitelist, docroot, run.sh outputs), F7 AWS SG lockout sequence (sound; self-check labeled best-effort), F8 secrets lifecycle (posture solid). 2 in-plan fixes — design plan §4 token convention corrected, 10_verify SG self-check comment. The F6 contract is now an inherited requirement on Plan 2.).
 
 ---
 

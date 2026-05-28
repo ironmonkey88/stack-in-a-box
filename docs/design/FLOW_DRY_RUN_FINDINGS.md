@@ -4,7 +4,9 @@ Sibling to [`DRY_RUN_FINDINGS.md`](DRY_RUN_FINDINGS.md). That doc covered **scri
 
 These are **simulations** — Code reading the docs + scripts as a user would experience them — not actual EC2 installs. Plan 3 is the real install. Plan 1's flow dry-runs validate the flow before Plan 3 burns time on a foundation that wasn't ready.
 
-**Tally: 5 scenarios walked. 7 findings (0 critical, 0 high, 4 medium, 3 low/cosmetic). 4 fixed in-plan, 1 mitigated by the orientation caveat, 2 documented-and-accepted (1 deferred to Plan 2 prep).**
+**Tally (Plan 1, scenarios F1-F5): 5 scenarios, 7 findings (0 critical, 0 high, 4 medium, 3 low/cosmetic). 4 fixed in-plan, 1 mitigated, 2 documented-and-accepted (1 deferred to Plan 2 prep).**
+
+**Tally (2026-05-28 follow-up, scenarios F6-F8): 3 scenarios, 9 findings (0 critical, 1 high, 5 medium, 3 low/cosmetic). 2 fixed in-plan, 7 surfaced as Plan-2-prep contract requirements or documented-and-accepted. The high (F6-1) is a hard interface contract Plan 2 must honor, not a current bug.**
 
 Severity vocabulary: Critical / High / Medium / Low / Cosmetic. Outcome vocabulary: Fixed in-plan / Mitigated / Deferred to Plan 2 / Documented and accepted.
 
@@ -74,6 +76,54 @@ Severity vocabulary: Critical / High / Medium / Low / Cosmetic. Outcome vocabula
 
 ---
 
+# 2026-05-28 follow-up — three more dry runs (F6-F8)
+
+Three additional flow-level passes, each a lens the Plan 1 set (F1-F5) didn't cover. F6 is a *forward* dry-run — simulating the install **after** the second batch ships — to surface interface-contract requirements before Plan 2 builds the 16 artifacts. F7 traces the one irreversible-mistake surface (the AWS Security Group transition). F8 traces the secrets lifecycle end-to-end. Still simulations, not EC2 installs.
+
+## Scenario F6 — post-Plan-2 forward contract check
+
+**Walk:** Assume Plan 2 has shipped the 16 second-batch artifacts. Trace the install end-to-end *on paper* and ask: do the v4 scripts and the (not-yet-built) artifacts agree on their interfaces? The scripts hard-code names and paths that the second-batch content must produce exactly, or the verify gates fail. Traced via `grep` across `scripts/setup/` for the load-bearing contract values.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F6-1 | **Hard table-name contract.** `09_first_run.sh` (lines 151, 169) and `10_verify.sh` (lines 46-47) verify exactly `main_gold.fct_smoke_test` and `main_admin.fct_pipeline_run_raw`. Plan 2's dbt gold model **must** be named `fct_smoke_test` in schema `main_gold`, and the admin pipeline-run table **must** be `fct_pipeline_run_raw` in `main_admin`. If Plan 2 names the gold model after the dataset (e.g. `fct_nyc_311`), the smoke-test verify gate fails even though the install worked. | High | **Deferred to Plan 2 prep** — not a current bug; it's a contract requirement. Plan 2 must honor these exact names (or update 09 + 10 in lockstep). Documented here as the canonical interface. |
+| F6-2 | **DuckDB path is consistent** across 05 (`DUCKDB_PATH="$PROJECT_ROOT/data/stack.duckdb"`), 09, and 10 — all three agree. Plan 2's `run.sh`, `config.yml` (via `{{DUCKDB_PATH}}`), and `dbt/profiles.example.yml` (via `{{DUCKDB_PATH}}`) must all resolve to `data/stack.duckdb`. The token wiring in 05 already enforces this for config + profiles. | — | **Validated** — no action; the path contract is internally consistent. |
+| F6-3 | **Token-convention claim in design plan §4 was wrong.** §4 listed `{{PROJECT_NAME}}`, `{{PROJECT_ROOT}}`, `{{NGINX_DOCROOT}}`, `{{TAILNET_HOSTNAME}}` as sed-substituted. Reality: scripts substitute `{{PROJECT_NAME}}` + `{{DUCKDB_PATH}}` (05) + `{{PROJECT_ROOT}}` (08) — three tokens, and `{{DUCKDB_PATH}}` wasn't even in §4's list. `{{NGINX_DOCROOT}}` is hardcoded in 07 (the nginx conf is copied verbatim, no substitution); `{{TAILNET_HOSTNAME}}` is derived at runtime into `scratch/tailnet_identity.env`, never substituted into a file. A Plan 2 author trusting §4 might ship `nginx/stack-in-a-box.conf` with a `{{NGINX_DOCROOT}}` token expecting substitution — it would deploy unsubstituted and nginx would fail. | Medium | **Fixed in-plan** — `STACK_IN_A_BOX_PLAN.md` §4 rewritten to name the 3 real tokens, mark the docroot as hardcoded-literal, and warn Plan 2 off the 2 phantom tokens. |
+| F6-4 | **run.sh stage contract.** `09_first_run.sh` invokes `run.sh manual` and expects it to (a) populate `fct_pipeline_run_raw` + `fct_smoke_test`, (b) deploy portal pages to the docroot. `10_verify.sh` then checks routes `/`, `/docs/`, `/metrics`, `/trust`, `/profile`, `/erd` + `:3000`. So Plan 2's `run.sh` must generate-and-deploy all five portal pages **to `/var/www/stack-in-a-box/`** (not `$PROJECT_ROOT/portal/`) — which matches the cross-batch flag already recorded in the v4 handoff §10 item 1. | Medium | **Deferred to Plan 2 prep** — consistent with handoff §10; re-confirmed here as a verify-gate-enforced contract. |
+| F6-5 | **`config.example.yml` token surface.** Script 05 runs `sed -e "s\|{{PROJECT_NAME}}\|...\|g" -e "s\|{{DUCKDB_PATH}}\|...\|g"` then verify-gates on `grep -q '{{'` (dies if any token remains). So Plan 2's `config.example.yml` may **only** use `{{PROJECT_NAME}}` and `{{DUCKDB_PATH}}` — any other `{{TOKEN}}` trips the "unsubstituted tokens" die in 05's verify gate. Same constraint on `dbt/profiles.example.yml`. | Medium | **Deferred to Plan 2 prep** — documented token whitelist for the two templated config files. |
+
+**Verdict:** F6 is the highest-value of the three. It converts "the second batch is missing" from a vague gap into a precise interface spec: exact table names, exact DuckDB path, exact token whitelist, exact docroot, exact run.sh outputs. Plan 2 now has a contract to build against, and one real design-doc error (F6-3) is fixed.
+
+## Scenario F7 — AWS Security Group lockout / network-transition sequence
+
+**Walk:** The scariest real-world step. Trace step 06 → manual SG edit on the user's laptop → resume → step 10's SG verification. Where can a user lock themselves out, and does the design prevent it?
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F7-1 | **Lockout-prevention ordering is correct.** `06`'s printed instructions (lines 118-136) put "VERIFY Tailnet SSH works" *first* with an explicit "If that fails — STOP. Do not close the AWS SG until it works," then the SG-close steps second, keeping HTTP/80. Following the instructions in order cannot lock the user out. | — | **Validated** — the ordered instructions are the right design. |
+| F7-2 | **The script cannot enforce the ordering** — the SG edit happens on the user's laptop via the AWS Console, outside the script's reach. A user who closes the SG *before* verifying Tailnet SSH, and whose Tailnet SSH then doesn't work, is locked out (only port 80 remains, which is no shell). This is inherent: the script deliberately does NOT touch the SG itself (touching it programmatically is the bigger lockout risk). | Medium | **Documented and accepted** — the printed warning is the mitigation. Inherent to the "user owns the irreversible step" design. A future enhancement could have the script poll "can you still SSH in?" after a timeout, but that adds complexity for marginal gain. |
+| F7-3 | **Step 10's SG self-check is best-effort, not authoritative.** `10_verify.sh` (when IMDSv2 yields the public IP) does `timeout 5 bash -c "</dev/tcp/$public_ip/22"` — connecting to the instance's *own* public IP from *inside* the instance. AWS may hairpin this, so the result doesn't reliably reflect the external view: a port could read "closed" here yet be open to the world (or vice versa). The authoritative check is from the user's laptop. | Medium | **Fixed in-plan** — added a comment + a "(best-effort, from inside the instance)" log qualifier to `10_verify.sh`, and the existing manual-verify fallback + browser step (which the laptop exercises) covers the gap. |
+| F7-4 | **Resume after the pause works both ways.** `bootstrap.sh` exits 0 after step 06 with the PAUSED banner. The user can resume via `--from 07` *or* a bare rerun (00-06 are checkpointed and skip, landing on 07). Both reach 07 correctly. | — | **Validated** — no single-path fragility. |
+
+**Verdict:** F7 passes. The one residual risk (F7-2, user closes SG out of order) is inherent and correctly mitigated by ordered instructions; the unreliable self-check (F7-3) is now honestly labeled best-effort.
+
+## Scenario F8 — secrets lifecycle end-to-end
+
+**Walk:** Three secrets flow through the install — Anthropic API key (05), Tailscale auth key (06), SSH keypair (pre-existing, user-managed). Trace each: entry → validation → storage → leak surface → bad/expired/malformed-key behavior.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F8-1 | **Both prompted keys are read without echo and validated.** `read_secret` (lib/common.sh) uses `read -rs` (no echo), rejects empty + whitespace-containing values, and enforces a prefix (`sk-ant-` / `tskey-auth-`) with up to 3 retries. A pasted-with-trailing-space key is caught at entry, not 15 minutes later. | — | **Validated** — solid entry-time validation. |
+| F8-2 | **`/etc/environment` write avoids argv exposure.** `write_env_var` (05) filters with `grep -v` to a user-owned `mktemp` then `install`s it, rather than `sed -i "s/.../$secret/"` — so the key value never appears in a process's argv (`ps auxww`). The SC2024 shellcheck disable on that line is justified (Plan 1). | — | **Validated** — the argv-leak fix from v4 iter-9 holds. |
+| F8-3 | **Env-var override path puts the key in the process environment.** For non-interactive installs, `ANTHROPIC_API_KEY` / `TAILSCALE_AUTHKEY` are read from the environment (`${!env_override}`), which means the key is in the install process's environment and inherited by child processes (Docker installer, Oxygen installer) and readable via `/proc/self/environ` to the same user during the run. | Low | **Documented and accepted** — single-user EC2; this is the standard CI trade-off and the documented non-interactive path. The interactive path (no env var) avoids it. |
+| F8-4 | **`09_first_run.sh` logs the first 14 chars of the API key** (`head -c 14` → `sk-ant-api03-X`) as a "key present" confirmation, and `chmod 600`s the run log. 14 chars is the public-ish key prefix, not the secret body. | Low | **Documented and accepted** — prefix-only disclosure to a 600 log; not a meaningful exposure. |
+| F8-5 | **Tailscale auth key is single-use + expiring by design** (the instructions tell the user to generate a single-use key). A reused/expired key fails at `tailscale up` with a clear die, and the user generates a fresh one — no silent half-join. The key is passed to `sudo tailscale up --authkey="$KEY"` which *does* put it in argv briefly (visible to root-capable `ps` during the call). | Low | **Documented and accepted** — single-use + short-lived key; the argv window is seconds and the key is spent on use. Tailscale's CLI offers no stdin-key alternative, so this is the standard invocation. |
+| F8-6 | **SSH keypair never touches the instance.** The `.pem` stays on the user's laptop (pre-install contract); the install never reads, copies, or references private key material. | — | **Validated** — correct posture; no private-key handling on the box. |
+
+**Verdict:** F8 passes. The secrets posture is sound — no-echo entry, prefix validation, argv-safe `/etc/environment` write, no private-key-on-box. The residual exposures (F8-3 env-var inheritance, F8-5 Tailscale argv window) are inherent to the respective tools' interfaces and acceptable on single-user EC2; both are documented rather than papered over.
+
+---
+
 ## Meta-observation
 
 The flow-level lens converged faster than the script-level lens did. The v4 handoff's script-level dry-runs needed 11 iterations to mine out the catastrophic + structural bugs (2 critical, 7 high). The flow-level pass found 0 critical, 0 high — the serious issues were all caught at the script level. What flow-level surfaced was exactly what the prompt predicted: cross-document inconsistency (F2, the bulk of the findings) and technically-correct-but-misleading-in-context failure modes (F1's die message). These are "the docs disagree with each other" and "the error blames the wrong thing" problems — real, worth fixing, but not the catastrophic class.
@@ -82,6 +132,8 @@ This is a useful signal for whether more flow dry-runs are worth doing: **probab
 
 **Size comparison:** this doc is ~1/3 the size of `DRY_RUN_FINDINGS.md`. That ratio is itself the finding — flow-level issues are far less numerous than script-level were, because (a) the scripts were already hardened, and (b) the flow has fewer moving parts than 13 scripts' worth of edge cases. Flow-level dry-runs are worth doing once per major doc/flow change, not iterated like script-level.
 
+**2026-05-28 follow-up (F6-F8):** the Plan 1 meta-observation said "probably not many more [dry runs]" — and within the *same lens* (cross-doc consistency, orientation), that held. But F6-F8 deliberately opened **new lenses**, and each paid off: F6 (forward contract) was the highest-value pass of all eight because it converted the missing second batch into a precise interface spec and caught a real design-doc error (F6-3); F7 confirmed the lockout design is sound and labeled the one unreliable check; F8 confirmed the secrets posture. The lesson refines: *iterating the same lens* hits diminishing returns fast, but *a genuinely new lens* on the same artifacts can still surface a high-severity contract item. The remaining lenses worth a future pass are narrow (e.g., a v22.04 / x86 / undersized-instance "wrong environment" walk), and none should block — the next high-value validation is still the real EC2 install (Plan 3). F6's contract spec is the single most useful output for Plan 2.
+
 ---
 
-*Flow dry-runs completed 2026-05-27 by Code (Plan 1, Session 1). Simulations, not EC2 installs. Plan 3 is the real install.*
+*Flow dry-runs F1-F5 completed 2026-05-27 (Plan 1, Session 1). Follow-up F6-F8 completed 2026-05-28. All simulations, not EC2 installs. Plan 3 is the real install.*
