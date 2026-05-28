@@ -194,6 +194,8 @@ Status vocabulary: `complete`, `partial`, `blocked`, `deferred`.
 
 ## 5.5 The `docs/prompts/` file convention
 
+> **In active use in this repo as of Plan 1.** This convention was inherited in structure from the project the discipline came from; **Plan 1** (decisions resolved + dry-run polish + shellcheck) was the first plan in `stack-in-a-box` to use it — its prompt landed at `docs/prompts/plan-1-decisions-and-dry-run-polish.md` and its report at the sibling `.report.md`. All future plans use the same convention.
+
 Prompts and reports may live as durable files in `docs/prompts/` rather than only in chat scrollback. The convention is additive — the paste-and-execute loop survives untouched.
 
 Filename pattern:

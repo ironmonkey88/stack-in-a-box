@@ -6,11 +6,11 @@
 
 ## Plans Registry
 
-> Each plan is named `Plan <number> — <label>`. Reference plans by full name in commits and LOG entries. This registry is empty at repo creation; plans accumulate as the project does work.
+> Each plan is named `Plan <number> — <label>`. Reference plans by full name in commits and LOG entries.
 
 | # | Name | Status | Closed in |
 |---|------|--------|-----------|
-| _none yet_ | | | |
+| 1 | Decisions resolved + dry-run polish + shellcheck | done | Session 1 (2026-05-27) |
 
 **Session counter:** contiguous 1–N, tracked by Code; all session files at [`docs/sessions/`](docs/sessions/). Chat-side sessions have their own threading and may diverge — Code's counter is authoritative.
 
@@ -18,19 +18,35 @@
 
 ## Current Status
 
-**Phase:** Pre-installation. Discipline docs + v4 setup scripts are in place; nothing has been installed on real EC2 yet.
+**Phase:** Pre-installation, decisions settled. Discipline docs + v4 setup scripts are in place and shellcheck-clean. The 5 design decisions are resolved. The application layer (the "second batch") hasn't been built yet — a real install completes steps 00-03 and dies at step 05, which the CLAUDE.md §1 orientation now states honestly.
 
-**Active decisions:** 5 open design decisions tracked in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). They need resolution before the first real install plan ships.
+**Active decisions:** All 5 resolved 2026-05-27 — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). Settled inputs for Plan 2: NYC 311 smoke source, Tailscale required, smoke in main path with delete-me markers, repo name `stack-in-a-box`, Oxygen version pinned later (after first real install).
 
 **Active blockers:** None.
 
-**Last Updated:** _(bump per session)_
+**Last Updated:** 2026-05-27 (Session 1 — Plan 1 done).
+
+---
+
+## Next-Plan-Candidates
+
+Corrected dependency chain (the original ordering had first-install before the second batch; Plan 1's dry-run showed first-install is impossible until the second batch ships):
+
+1. **Plan 2 — The second batch.** Build the 16 missing artifacts per [`docs/design/STACK_IN_A_BOX_PLAN.md`](docs/design/STACK_IN_A_BOX_PLAN.md) §9, against the settled decisions. Estimated 10-14 hours. Removes the CLAUDE.md §1 "Current install state" caveat as part of its housekeeping.
+2. **Plan 3 — First real install** on a fresh t4g.medium EC2. ~90 minutes. Captures the working Oxygen version.
+3. **Plan 4 — Retroactive Oxygen version pin** per decision #4 + Plan 3 findings.
 
 ---
 
 ## Recent Sessions
 
-_No sessions yet. Sessions accumulate as plans run._
+### Session 1 — 2026-05-27 — plan-1-decisions-and-dry-run-polish
+
+- **Goal:** Open the repo's own plan ledger. Resolve all 5 design decisions, fix the honesty disconnects surfaced by Code's 2026-05-27 dry-run, run shellcheck, and do flow-level dry-runs.
+- **Shipped:** All 5 decisions RESOLVED in OPEN_DECISIONS.md with rationale + Plan-2 implications. TASKS.md + LOG.md reordered to the corrected dependency chain. CLAUDE.md §1 "Current install state" caveat. Design plan §8 reframed ("out of scope" → "required follow-up work"). Script 05 real repo URL + clone-block comment. `apps/.gitkeep`. Shellcheck clean (3 minor findings in script 05, all fixed). Flow-level dry-runs across 5 scenarios in FLOW_DRY_RUN_FINDINGS.md. PROMPTS.md notes Plan 1 as first use of the prompt-file convention here.
+- **Decisions:** 5 (all inherited from Chat's upstream resolution — recorded, not relitigated).
+- **Status:** complete
+- **Next:** Plan 2 — the second batch.
 
 ---
 
@@ -42,11 +58,13 @@ _None._
 
 ## Decisions Log
 
-Project-level decisions (the 5 open design decisions are tracked separately in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md)).
-
 | Date | Decision | Status |
 |---|---|---|
-| _none yet_ | | |
+| 2026-05-27 | Tailscale **required** (not optional) — cleaner security posture, free-tier covers the audience. | active |
+| 2026-05-27 | Smoke source = **NYC 311** (SODA `erm2-nwe9`) — highest pipeline reuse, well-documented API. | active |
+| 2026-05-27 | Smoke test lives in **main path** with delete-me markers + `make rip-out-smoke-test` (lands in Plan 2). | active |
+| 2026-05-27 | Oxygen install stays **latest from get.oxy.tech** with a TODO; retroactive pin in Plan 4 after first install. | active |
+| 2026-05-27 | Repo name **`stack-in-a-box`** stays; rename is a contained future plan if needed. | active |
 
 ---
 

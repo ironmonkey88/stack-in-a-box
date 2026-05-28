@@ -1,10 +1,10 @@
-# OPEN_DECISIONS.md — The 5 design decisions awaiting resolution
+# OPEN_DECISIONS.md — The 5 design decisions (RESOLVED)
 
-These are extracted from `STACK_IN_A_BOX_PLAN.md` §5 and surfaced here as a dedicated doc because resolving them is the next eligible Chat-side session before the first real install plan ships.
+These were extracted from `STACK_IN_A_BOX_PLAN.md` §5 and surfaced as a dedicated doc. **All five were resolved 2026-05-27** (Plan 1) from Chat's rationale in response to Code's session-2026-05-27 dry-run findings.
 
-Each decision is named with its framing, Chat's lean (from the v4 handoff), and rationale. **None are resolved.** A future Chat-side session works through them; a follow-up Code session bakes the resolutions into the scripts + docs.
+Each decision below keeps its original framing (the trade-off space, the alternatives, the costs) as a record, followed by a **RESOLVED** paragraph naming the choice, the rationale, and the forward implications for the second batch (Plan 2). The framing is preserved deliberately — a future reader who wants to revisit a decision can see what the trade-off looked like at resolution time.
 
-> **Status: NOT YET RESOLVED.** As of repo creation (2026-05-27). Until these are resolved, the scripts in `scripts/setup/` carry the v4 defaults — which are defensible placeholders, not decisions.
+> **Status: ALL RESOLVED 2026-05-27 (Plan 1).** The scripts in `scripts/setup/` carry defaults consistent with these resolutions. A future plan may revisit any decision with its own rationale — decisions are sticky, not permanent.
 
 ---
 
@@ -14,11 +14,11 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 
 **Alternative:** Tailscale is optional. The user can choose nginx Basic Auth on `:3000` instead (the `htpasswd` binary is already installed in script 01 for this reason). Script 06 becomes "either Tailscale OR Basic Auth"; script 07 grows the conditional nginx block.
 
-**Chat's lean:** Required. Tailscale's free tier handles up to 3 users / 100 devices, which is the audience of this template. Basic Auth is a worse experience and a weaker security story.
-
 **Cost of "optional":** doubles the surface area of scripts 06 + 07, doubles the verify gates, doubles the failure modes the README has to cover.
 
 **Cost of "required":** the user needs a free Tailscale account before the install starts. This is the only third-party account required beyond AWS and Anthropic.
+
+**RESOLVED 2026-05-27 → Required.** Rationale: cleaner security posture, free-tier Tailscale (3 users / 100 devices) handles the audience size, and Basic Auth is a weaker security story not worth doubling the surface area of scripts 06 + 07. **Forward implications for Plan 2:** scripts 06 + 07 stay exactly as written; no alternative-path code lands; `HARDENING.md` (when it ships in the second batch) does NOT need a "Tailscale-optional install" section — it can document Basic Auth purely as an additional hardening layer on top of Tailscale, not as a substitute.
 
 ---
 
@@ -32,9 +32,9 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 - **A federal-data smoke** (e.g., a bulk-download CSV from a government open-data portal). Removes the "live API" dependency; the file is cached in the repo. Faster smoke test, but less honest about what real pipelines deal with.
 - **A synthetic CSV** (committed to the repo). Fastest, least honest.
 
-**Chat's lean:** NYC 311 for v1. Document "swap in any SODA dataset by changing 3 lines" as the headline. USGS as an `examples/alt-smoke-tests/` once the template is real.
-
 **Why a real API source matters:** the smoke test exercises the dlt → bronze → gold → admin → portal chain. If the smoke source is a static CSV, the chain doesn't exercise the SODA pull retry logic, the auto-pagination, or the source-health checker — three patterns the template's value-prop depends on.
+
+**RESOLVED 2026-05-27 → NYC 311 (SODA `erm2-nwe9`).** Rationale: the highest pipeline-shape reuse from existing civic-data SODA pipeline code (~90%); well-documented public API; volume scales appropriately across the small / medium / large smoke modes. **Forward implications for Plan 2:** the second-batch `dlt/smoke_test_pipeline.py` targets `https://data.cityofnewyork.us/resource/erm2-nwe9.json`; the bronze + gold dbt models reflect the 311 service-request schema; the semantic-layer view and the agent's canonical smoke question both anchor on NYC 311. "Swap in any SODA dataset by changing 3 lines" is the documented headline; USGS / alternate sources can land later under `examples/alt-smoke-tests/` if the SODA-coupling concern needs addressing.
 
 ---
 
@@ -56,9 +56,9 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 - A user's first move is to copy from `examples/smoke-test/` into the main path and customize.
 - Cleaner conceptual story ("the box is empty, the example shows you how to fill it"). Doubles doc surface.
 
-**Chat's lean:** Main path with prominent markers + `make rip-out-smoke-test`. Cheapest path that earns the "in a box" framing.
-
 **Tension:** Option A is "the box arrives with one example running so you can verify the box works." Option B is "the box arrives empty; the example shows you how to fill it." Both are honest framings of the same trade-off.
+
+**RESOLVED 2026-05-27 → Main path with delete-me markers (Option A).** Rationale: cheapest path that earns the "in a box" framing — the box arrives with one working example so the user can verify it works end-to-end before connecting their own data. **Forward implications for Plan 2:** second-batch smoke files (`dlt/smoke_test_pipeline.py`, `semantics/views/smoke_test.view.yml`, `semantics/topics/smoke_test.topic.yml`, `dbt/models/bronze/smoke_test_*.sql`, `dbt/models/gold/smoke_test_*.sql`) live in their natural locations with prominent `🚧 Delete this when connecting your data` markers in each file header. A `make rip-out-smoke-test` target ships with the second batch to remove all smoke files cleanly in one command.
 
 ---
 
@@ -68,13 +68,11 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 
 **Alternative:** Pin to a known-good Oxygen version, replacing the installer URL with a versioned tarball or release-tagged installer URL.
 
-**Chat's lean:** Pin to a known-good Oxygen version at template publish time. Document the upgrade path.
-
-**Why pin:** reproducibility. A template repo's value-prop is "install this and it works." If Oxygen ships a breaking change tomorrow, the template breaks for every new user until the maintainer updates the URL. Pinning makes the template stable; upgrades are explicit.
+**Why pin:** reproducibility. A template repo's value-prop is "install this and it works." If Oxygen ships a breaking change tomorrow, the template breaks for every new user until the maintainer updates the URL.
 
 **Why latest:** the template never ages. Users always get current Oxygen features. The cost is the "Oxygen broke our template" failure mode.
 
-**Cost of resolving:** identify the current Oxygen version, find the versioned-installer URL (or release tarball with SHA256), update script 03, document the upgrade procedure.
+**RESOLVED 2026-05-27 → Latest from `get.oxy.tech`, with a TODO comment.** Rationale: pinning before there's evidence of which version actually works end-to-end on a real install is theater — you'd be pinning to a version nobody has verified against the full pipeline. **Forward implications:** script 03 keeps the current `https://get.oxy.tech` URL but gains a TODO comment naming that the first real install (Plan 3 in the candidate sequence) is where the working Oxygen version gets captured, and a follow-up plan (Plan 4) retroactively pins to that known-good version. Pinning is deferred to *after* evidence, not before.
 
 ---
 
@@ -90,19 +88,14 @@ Each decision is named with its framing, Chat's lean (from the v4 handoff), and 
 - `analytics-box` — emphasizes the analyst-facing surface. OK.
 - `instant-warehouse` — overpromises ("instant" isn't honest about the 35-60 minute install).
 
-**Chat's lean:** None — the user's call.
-
-**Cost of resolving:** rename the GitHub repo (one click, but breaks any external links/clones). Update README, LOG.md, CLAUDE.md, internal references in scripts (`PROJECT_NAME` defaults, hostname defaults, etc.). Estimated 1-2 hours of follow-up work after the rename.
+**RESOLVED 2026-05-27 → `stack-in-a-box` stays.** Rationale: no strong reason to change; the name is clean and descriptive, and a rename is a contained one-plan task if a better name emerges later. **Forward implications:** no current work; the "this is one of the open decisions" framing about the name is removed from the repo's docs in favor of "this is the repo name." `05_clone_and_config.sh`'s `DEFAULT_REPO_URL` now points at the real `ironmonkey88/stack-in-a-box` URL (Plan 1 Phase C1), with a comment noting that a future rename would update it.
 
 ---
 
-## How these resolve
+## How these resolved
 
-A future Chat-side session works through the 5 decisions. The shape of that session:
+The 5 decisions were resolved by Chat on 2026-05-27, in response to Code's dry-run findings from the same day, and baked into the repo by Plan 1. The downstream sequence those resolutions unlock:
 
-1. Each decision gets ~10 minutes of consideration.
-2. Resolution is recorded in this file: "Decided: <choice>. Rationale: <one paragraph>."
-3. A follow-up Code plan ("Plan 1 — Bake design decisions + shellcheck") updates the v4 scripts to reflect the chosen options, runs shellcheck, and prepares the bundle for first real install.
-4. After Plan 1, "Plan 2 — First real install end-to-end" provisions a fresh EC2 and runs `bootstrap.sh`.
-
-Until then, the v4 scripts ship with the placeholder defaults named above, and the README + LOG.md flag them as not-yet-resolved.
+1. **Plan 2 — The second batch:** build the 16 missing artifacts (`run.sh`, `requirements.txt`, `config.example.yml`, dbt models, dlt smoke pipeline, semantic-layer YAML, agent YAML, systemd units, portal generators, helper scripts) per `STACK_IN_A_BOX_PLAN.md` §9. Scoped against the settled inputs above.
+2. **Plan 3 — First real install:** provision a fresh t4g.medium and run `bootstrap.sh` end-to-end. Captures which Oxygen version actually works.
+3. **Plan 4 — Retroactive Oxygen version pin:** per decision #4, pin script 03 to the version Plan 3 verified.
