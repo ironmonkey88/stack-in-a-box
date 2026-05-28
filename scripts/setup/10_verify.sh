@@ -66,7 +66,14 @@ main() {
     fi
 
     if [[ -n "$public_ip" ]]; then
-        log_info "checking public-port lockdown on $public_ip..."
+        # NOTE (best-effort): this tests the instance's OWN public IP from
+        # inside the instance. AWS may hairpin this connection, so the result
+        # is not a fully authoritative substitute for an external probe — a
+        # port could read "closed" here yet be open to the internet (or vice
+        # versa) depending on routing. The truly authoritative check is from
+        # the user's laptop (the browser step below exercises it). We keep
+        # this as a loud heuristic; the manual-verify fallback covers the gap.
+        log_info "checking public-port lockdown on $public_ip (best-effort, from inside the instance)..."
         local public_sg_failures=0
         if timeout 5 bash -c "</dev/tcp/$public_ip/22" 2>/dev/null; then
             log_error "PUBLIC port 22 (SSH) is OPEN on $public_ip — close it at AWS SG NOW"

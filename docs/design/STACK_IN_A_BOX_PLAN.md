@@ -188,7 +188,7 @@ stack-in-a-box/
     └── SWAP_IN_YOUR_DATA.md        ← the "just add data" doc
 ```
 
-Token convention: `{{PROJECT_NAME}}`, `{{PROJECT_ROOT}}`, `{{NGINX_DOCROOT}}`, `{{TAILNET_HOSTNAME}}`. Scripts substitute via `sed` at install time.
+Token convention: the v4 setup scripts actually substitute **three** tokens via `sed` at install time — `{{PROJECT_NAME}}` + `{{DUCKDB_PATH}}` (script 05, into `config.yml` and `dbt/profiles.yml`) and `{{PROJECT_ROOT}}` (script 08, into the systemd units). The nginx docroot (`/var/www/stack-in-a-box`) is **hardcoded** in `07_nginx_site.sh` and must be hardcoded literally in `nginx/stack-in-a-box.conf` (script 07 copies the conf verbatim, no substitution). The Tailnet hostname is **derived at runtime** and written to `scratch/tailnet_identity.env` — no file is token-substituted with it. (Dry-run #6, 2026-05-28, found the earlier "`{{NGINX_DOCROOT}}` + `{{TAILNET_HOSTNAME}}`" convention claim was wrong: no script substitutes those two, and the claim omitted `{{DUCKDB_PATH}}` which is substituted. Plan 2's second-batch artifacts must not rely on those two phantom tokens being auto-filled.)
 
 ---
 
