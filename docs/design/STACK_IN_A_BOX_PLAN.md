@@ -192,7 +192,9 @@ Token convention: `{{PROJECT_NAME}}`, `{{PROJECT_ROOT}}`, `{{NGINX_DOCROOT}}`, `
 
 ---
 
-## 5. Decisions That Need User's Call
+## 5. Decisions That Needed the User's Call (RESOLVED 2026-05-27)
+
+> **All five were resolved 2026-05-27 (Plan 1) — see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) for the resolutions, rationale, and forward implications.** The framing below is the design-time snapshot, preserved as a record of what the trade-off space looked like before the calls were made.
 
 Five questions worth resolving before scripts go to production:
 
@@ -262,9 +264,9 @@ That's the product.
 
 ---
 
-## 8. What This Plan Does Not Cover
+## 8. Required follow-up work (separate plans)
 
-Explicitly out of scope, to be addressed in follow-up plans:
+Required follow-up work, scoped as separate plans:
 
 - **Multi-workspace Oxygen mode** — requires Oxygen's wizard to grow an "existing DuckDB" path.
 - **HTTPS** — Caddy or Let's Encrypt + nginx. Documented in `HARDENING.md`.

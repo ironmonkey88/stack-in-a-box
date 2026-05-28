@@ -4,7 +4,7 @@ A reference implementation of a trustworthy data analytics platform — modular,
 
 The repo holds two things: **a discipline** (how to build platforms that produce answers users can trust) and **a reference implementation** (one valid instantiation of that discipline on EC2 + Docker + Oxygen + Python + dlt + dbt-duckdb + Tailscale + nginx + systemd). The discipline is the product. The implementation demonstrates how it plays out concretely. Anyone with different infrastructure can swap components and the platform still works because the design transfers, not the technology.
 
-> **Working placeholder name.** `stack-in-a-box` is one of five open design decisions tracked in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). A future plan resolves the name; until then, the placeholder is deliberate.
+> **Repo name.** `stack-in-a-box` is the repo name — resolved 2026-05-27 (decision #5 in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md)). A rename remains a contained future plan if a better name emerges.
 
 ---
 
@@ -26,7 +26,7 @@ If you want to skip orientation and just run a script, this repo isn't for you. 
 | `LOG.md` | Captain's log — running record of sessions, decisions, blockers. Empty at repo creation; plans accumulate. |
 | `TASKS.md` | Task tracker — granular checkpoints with status markers. |
 | `scripts/setup/` | 13 v4 bash scripts that install the reference platform end-to-end on a fresh Ubuntu 24.04 ARM EC2 instance. Dry-run-validated (11 iterations); not yet executed on real EC2. |
-| `docs/design/` | The full design plan, the dry-run findings log, and the 5 open decisions. |
+| `docs/design/` | The full design plan, the dry-run findings logs, and the 5 design decisions (resolved). |
 | `docs/handoffs/` | End-of-thread Code → Chat summaries spanning multiple plans. |
 | `docs/prompts/` | Per-work-item Chat-issued prompts + Code-issued reports. |
 | `docs/sessions/` | Full session narratives — the bronze layer behind LOG.md. |
@@ -47,11 +47,11 @@ When install + smoke verify complete, Claude returns to a working-backwards ques
 
 ## Status
 
-**Reference implementation v4.** Setup scripts are dry-run-validated (11 iterations, 79 issues surfaced, 33 fixed, 46 cancelled — see [`docs/design/DRY_RUN_FINDINGS.md`](docs/design/DRY_RUN_FINDINGS.md)). They have **not yet been executed on real EC2**. The first real install is the next plan.
+**Reference implementation v4.** Setup scripts are dry-run-validated (11 script-level iterations + flow-level dry-runs, see [`docs/design/DRY_RUN_FINDINGS.md`](docs/design/DRY_RUN_FINDINGS.md) and [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md)) and pass shellcheck. They have **not yet been executed on real EC2**.
 
-**Five design decisions remain open** — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). They need resolution before the first real install plan ships.
+**Not yet installable end-to-end.** A real install today completes steps 00-03 (Ubuntu base, Docker, Oxygen CLI) and then dies at step 05, because the application layer (`run.sh`, dbt models, dlt smoke pipeline, nginx site config, systemd units, portal HTML) hasn't been built yet — that's **Plan 2 (the second batch)**, the gate to a first real install. CLAUDE.md §1 orients users honestly about this; see `docs/design/STACK_IN_A_BOX_PLAN.md` §9 for the full artifact list.
 
-**Missing artifacts.** The setup scripts reference files that land in a future plan ("the second batch"): `run.sh`, `requirements.txt`, `config.example.yml`, dbt models, systemd units, semantic-layer YAML, agent YAML, portal generators. See `docs/design/STACK_IN_A_BOX_PLAN.md` §9 for the full list.
+**Five design decisions resolved** (2026-05-27, Plan 1) — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md): NYC 311 smoke source, Tailscale required, smoke in main path with delete-me markers, repo name `stack-in-a-box`, Oxygen version pinned after first real install.
 
 ## License
 

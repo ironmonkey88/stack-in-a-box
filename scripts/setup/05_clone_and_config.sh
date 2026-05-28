@@ -21,7 +21,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # Default repo URL — override with TEMPLATE_REPO_URL env var if you've forked.
-readonly DEFAULT_REPO_URL="https://github.com/CHANGE-ME/stack-in-a-box.git"
+# NOTE: if the repo is renamed in a future plan, update this URL.
+readonly DEFAULT_REPO_URL="https://github.com/ironmonkey88/stack-in-a-box.git"
 readonly REPO_URL="${TEMPLATE_REPO_URL:-$DEFAULT_REPO_URL}"
 
 # Default config substitutions — these become the project's identity on this host.
@@ -38,6 +39,11 @@ main() {
         log_ok "repo already present at $PROJECT_ROOT"
         log_info "(re-clone disabled; rm -rf the dir and rerun if you need a fresh clone)"
     else
+        # This block handles the case where bootstrap.sh was fetched via curl
+        # (e.g., `curl -fsSL .../bootstrap.sh | bash`) rather than git clone.
+        # The README + CLAUDE.md document the clone-first flow, but the one-liner
+        # fetch is a reasonable future invocation and ripping out this defensive
+        # code is premature minimization.
         log_info "cloning $REPO_URL into $PROJECT_ROOT..."
         # The directory was created in 01; git clone won't clone into a
         # non-empty dir, so we use the "clone into temp + move" pattern.
@@ -156,7 +162,7 @@ main() {
     # ---------- dbt profiles ----------
     mkdir -p "$HOME/.dbt"
     if [[ -f "$HOME/.dbt/profiles.yml" ]]; then
-        log_ok "~/.dbt/profiles.yml already exists; leaving in place"
+        log_ok "$HOME/.dbt/profiles.yml already exists; leaving in place"
     elif [[ ! -f "$PROJECT_ROOT/dbt/profiles.example.yml" ]]; then
         log_warn "$PROJECT_ROOT/dbt/profiles.example.yml not found; skipping profile setup"
     else
@@ -166,7 +172,7 @@ main() {
             -e "s|{{PROJECT_NAME}}|$PROJECT_NAME|g" \
             "$PROJECT_ROOT/dbt/profiles.example.yml" > "$HOME/.dbt/profiles.yml"
         chmod 600 "$HOME/.dbt/profiles.yml"
-        log_ok "~/.dbt/profiles.yml written"
+        log_ok "$HOME/.dbt/profiles.yml written"
     fi
 
     verify_gate
@@ -188,6 +194,9 @@ write_env_var() {
     if sudo grep -q "^${key}=" /etc/environment 2>/dev/null; then
         # Filter out the existing line, then append the new one. The
         # secret value is on stdin via heredoc, not in argv.
+        # shellcheck disable=SC2024  # $tmp is a user-owned mktemp file, so the
+        # redirect doesn't need root; sudo is only on the read, in case a future
+        # hardening tightens /etc/environment from 644 to 640.
         sudo grep -v "^${key}=" /etc/environment > "$tmp"
         printf '%s=%s\n' "$key" "$value" >> "$tmp"
         sudo install -m 0644 -o root -g root "$tmp" /etc/environment

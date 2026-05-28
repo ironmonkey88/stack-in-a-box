@@ -24,7 +24,7 @@ The repo has a hierarchy of documents — read in this order:
 - `docs/handoffs/` — end-of-thread Code → Chat summaries.
 - `docs/limitations/` — the limitations registry.
 - `docs/prompts/` — per-work-item Chat-issued prompts + Code-issued reports.
-- `docs/design/` — the design plan, dry-run findings, and 5 open decisions.
+- `docs/design/` — the design plan, dry-run findings (script-level + flow-level), and the 5 design decisions (resolved).
 
 ---
 
@@ -39,8 +39,11 @@ Instead, Claude does the orientation workflow:
 3. **Walk through the major sections of the repo at a high level.** The five discipline docs (CLAUDE.md, PROMPTS.md, PHILOSOPHY.md, STANDARDS.md, DASHBOARDS.md), the 13 setup scripts at `scripts/setup/`, the design materials at `docs/design/`, the handoff history at `docs/handoffs/`. A sentence or two each. Don't recite the README; point at it.
 4. **Describe the working-backwards discipline.** Two or three sentences: "The platform is built on a discipline — every layer has a verification gate, every stage trusts upstream stages' verified outputs, every answer the chat agent gives carries a trust contract (SQL + row count + citations + relevant limitations). Honest reporting beats clean completion."
 5. **Describe what the install process does at a high level.** "The install runs 13 scripts in order: preflight → EC2 base packages → Docker → Oxygen → Python venv → clone + config + API key → Tailscale → nginx → systemd → first smoke-test pipeline → verify. Wall clock: 35-60 minutes on a fresh EC2 instance, dominated by the smoke-test pipeline. ~10 minutes of human attention — mostly the AWS Security Group lockdown step in the middle."
-6. **Ask the user when they want to begin.** "Read the orientation, ask any questions, and when you're ready, tell me to begin. I'll run the install with verify gates respected at every stage."
-7. **Wait for the user's answer before doing anything else.**
+6. **State the current install state honestly.** (See the callout below — this is the working-backwards discipline applied to the platform's own front door.)
+7. **Ask the user when they want to begin.** "Read the orientation, ask any questions, and when you're ready, tell me to begin. I'll run the install with verify gates respected at every stage."
+8. **Wait for the user's answer before doing anything else.**
+
+> **Current install state (as of this commit):** The setup scripts have been dry-run-validated across 11+ iterations and pass shellcheck, but the **application layer** (`run.sh`, dbt models, dlt smoke pipeline, nginx site config, systemd units, portal HTML) **hasn't been built yet** — see `docs/design/STACK_IN_A_BOX_PLAN.md` §9 "the second batch." A real install today completes steps 00 through 03 cleanly (Ubuntu base, Docker, Oxygen CLI installation) and then **dies at step 05** with `config.example.yml missing — was the repo cloned correctly?`. This is useful for validating the infrastructure layer but is **not a complete install**. Tell the user this plainly during orientation, and let them make an informed choice: proceed for the partial infrastructure install, or wait for Plan 2 (the second batch) to ship before installing. **This caveat is removed when Plan 2 lands.**
 
 The orientation is the first lesson in working-backwards. By the time the user says go, they understand what's about to happen. **Do not skip this step**, even if the user seems impatient. Skipping orientation skips the discipline.
 
