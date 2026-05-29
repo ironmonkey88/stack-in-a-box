@@ -3,7 +3,7 @@
 # scripts/setup/05_clone_and_config.sh copies this to config.yml and
 # substitutes {{PROJECT_NAME}} (display) + {{DUCKDB_PATH}} (warehouse file).
 # Those are the ONLY two tokens permitted here — script 05's verify gate
-# dies if any other {{...}} survives.
+# dies if any other unsubstituted double-brace token survives.
 #
 # The Oxygen database NAME is the fixed identifier `warehouse` (NOT the
 # hyphenated PROJECT_NAME) so the Answer Agent's `database: warehouse`
