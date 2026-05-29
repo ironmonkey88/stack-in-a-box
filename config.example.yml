@@ -18,4 +18,4 @@ models:
 databases:
   - name: warehouse
     type: duckdb
-    dataset: "{{DUCKDB_PATH}}"
+    path: "{{DUCKDB_PATH}}"
