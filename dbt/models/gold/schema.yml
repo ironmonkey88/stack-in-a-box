@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: fct_smoke_test
+    description: |
+      🚧 SMOKE TEST — gold fact over NYC 311 service requests. One row per
+      request (grain: unique_key). The install's verify gates assert this
+      table exists and is non-empty (main_gold.fct_smoke_test). Delete with
+      the rest of the smoke test; your real gold fact replaces it.
+    columns:
+      - name: request_sk
+        data_type: VARCHAR
+        description: 'Surrogate PK — md5(unique_key).'
+        data_tests:
+          - not_null
+          - unique
+      - name: unique_key
+        data_type: VARCHAR
+        description: 'Natural key from NYC 311.'
+        data_tests:
+          - not_null
+          - unique
+      - name: created_dt
+        data_type: DATE
+        description: 'Request creation date.'
+        data_tests:
+          - not_null
+      - name: complaint_type_id
+        data_type: VARCHAR
+        description: 'FK to dim_complaint_type.'
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_complaint_type')
+                field: complaint_type_id
+      - name: borough_id
+        data_type: VARCHAR
+        description: 'FK to dim_borough.'
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_borough')
+                field: borough_id
+      - name: status
+        data_type: VARCHAR
+        description: 'Request status.'
+
+  - name: dim_complaint_type
+    description: '🚧 SMOKE TEST. Distinct NYC 311 complaint types with counts + date span.'
+    columns:
+      - name: complaint_type_id
+        data_type: VARCHAR
+        description: 'Surrogate PK — md5(complaint_type).'
+        data_tests:
+          - not_null
+          - unique
+      - name: complaint_type
+        data_type: VARCHAR
+        description: 'Complaint type label.'
+        data_tests:
+          - not_null
+
+  - name: dim_borough
+    description: '🚧 SMOKE TEST. Distinct NYC boroughs with request counts.'
+    columns:
+      - name: borough_id
+        data_type: VARCHAR
+        description: 'Surrogate PK — md5(borough).'
+        data_tests:
+          - not_null
+          - unique
+      - name: borough
+        data_type: VARCHAR
+        description: 'Borough label.'
+        data_tests:
+          - not_null
