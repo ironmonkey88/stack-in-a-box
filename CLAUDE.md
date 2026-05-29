@@ -1,5 +1,12 @@
 # CLAUDE.md — Operating instructions for Claude Code in this repo
 
+> **⚠️ Which repo is this? Read before you get confused by recent history.**
+> This is **`stack-in-a-box`** (GitHub `ironmonkey88/stack-in-a-box`): a **generic, dataset-agnostic analytics-stack template** extracted from the proven patterns of the Somerville build. It uses **NYC 311 smoke data**, has its **own plan ledger** (this repo's Plan 1, Plan 2, … are unrelated to the sibling's), and has **no EC2 yet** (its Plan 3 provisions the first one).
+>
+> There is a **separate sibling repo** at `/Users/gordonwong/claude-projects/oxygen-mvp` (GitHub `ironmonkey88/oxygen-mvp`): the **Somerville** civic-analytics build, with a live EC2 at `oxygen-mvp.taildee698.ts.net`, its own 4-MVP sequence (MVP 2 active), and **Somerville 311** data. It is **not** a rename, fork, or parent of stack-in-a-box — both projects continue independently.
+>
+> If recent conversation/session history mentions **Somerville**, the **4-MVP roadmap**, the live **EC2/Tailscale host**, or PRs against `ironmonkey88/oxygen-mvp`, **that work belongs to the sibling repo, not here.** Do not import its MVP numbers, TASKS/LOG entries, Somerville models, or commits into stack-in-a-box. When you're working in `oxygen-mvp`, follow *its* CLAUDE.md; when you're here, follow this one. Don't conflate the two ledgers, plan/MVP sequences, smoke datasets, or EC2 hosts.
+
 This file is Claude Code's contract with the project. It does three things:
 
 1. **Tells Claude how to orient a new user** before executing anything (the "go button" shape — see §1 below).
