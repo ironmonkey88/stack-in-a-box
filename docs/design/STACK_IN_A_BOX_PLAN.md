@@ -278,4 +278,32 @@ Required follow-up work, scoped as separate plans:
 
 ---
 
-*Plan written 2026-05-13 by Chat. Hand to Code for execution after the user resolves Q1–Q5 in §5.*
+## 9. The second batch — artifacts still to build (Plan 2)
+
+The v4 setup scripts reference these files but they haven't been built yet. Until they exist, `09_first_run.sh` fails at its `[[ ! -x "$RUN_SH" ]]` precondition (and `05`/`07`/`08` die earlier on their own missing inputs). Building these is **Plan 2's** core scope; the additional hardening + docs to fold in alongside them are consolidated in [`IMPROVEMENTS_BACKLOG.md`](IMPROVEMENTS_BACKLOG.md).
+
+| File | Purpose | Read by |
+|---|---|---|
+| `requirements.txt` | Pinned dlt/dbt/duckdb/python-ulid versions | script 04 |
+| `config.example.yml` | Oxygen config template (`{{PROJECT_NAME}}` + `{{DUCKDB_PATH}}` only) | script 05 |
+| `dbt/profiles.example.yml` | dbt profile template (same token whitelist) | script 05 |
+| `nginx/stack-in-a-box.conf` | nginx site config (docroot hardcoded `/var/www/stack-in-a-box`) | script 07 |
+| `portal/index.html` | first-boot portal | script 07 |
+| `systemd/oxy.service` + 3 timer/service pairs | the 4 systemd units (`{{PROJECT_ROOT}}` token) | script 08 |
+| `run.sh` | the 10-stage orchestrator (`run.sh manual`) | script 09 |
+| `dlt/smoke_test_pipeline.py` | NYC 311 SODA pull | run.sh stage 1 |
+| `dlt/load_dbt_results.py` | append run_results.json → admin | run.sh |
+| `dbt/models/{bronze,gold,admin}/*.sql` | warehouse models — gold **must** produce `main_gold.fct_smoke_test`; admin **must** produce `main_admin.fct_pipeline_run_raw` | run.sh stages 2 + 5 |
+| `semantics/views/smoke_test.view.yml` + `topics/smoke_test.topic.yml` | semantic layer for the smoke data | agent |
+| `agents/answer_agent.agent.yml` | trust-contract-bearing agent prompt | run.sh / agent |
+| `scripts/pipeline_run_start.py` + `pipeline_run_end.py` | run envelope | run.sh |
+| `scripts/source_health_check.py` | hourly source liveness | timer |
+| `scripts/profile_tables.py` + `check_profile_staleness.py` | profiling helpers | run.sh / timer |
+| `scripts/generate_*.py` (5 portal generators) | `/metrics` `/trust` `/profile` `/erd` pages | run.sh |
+| `scripts/build_limitations_index.py` | limitations registry index | run.sh |
+
+Estimated ~10-14 hours, mostly tokenization + parameterization of a proven stack. See `IMPROVEMENTS_BACKLOG.md` §A for the hard interface contract these must honor.
+
+---
+
+*Plan written 2026-05-13 by Chat. §5 decisions resolved 2026-05-27 (Plan 1). §9 added 2026-05-28 (the missing-artifacts list was previously only in the v4 handoff §9 — surfaced as a broken cross-reference while batching the improvements backlog). Hand to Code for execution per the Plans Registry.*
