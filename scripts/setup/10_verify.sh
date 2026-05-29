@@ -26,9 +26,14 @@ main() {
     check_active oxy.service       || failures=$((failures + 1))
 
     # ---------- timers ----------
+    # We check enabled (boot-persistent), NOT active: step 08 deliberately
+    # enables the timers without `--now`, because pipeline-refresh.timer has
+    # Persistent=true and activating it mid-install fires an immediate catch-up
+    # run.sh that contends with the smoke run / oxy on the DuckDB single-writer
+    # lock. The timers activate on next boot.
     local timer
     for timer in pipeline-refresh.timer source-health-check.timer profile-tables.timer; do
-        check_active "$timer" || failures=$((failures + 1))
+        check_enabled "$timer" || failures=$((failures + 1))
     done
 
     # ---------- portal routes ----------
@@ -118,6 +123,19 @@ check_active() {
         return 0
     else
         log_error "systemd: $svc NOT active — try 'sudo systemctl status $svc'"
+        return 1
+    fi
+}
+
+# check_enabled UNIT — verify a systemd unit is enabled (boot-persistent),
+# regardless of whether it is currently active.
+check_enabled() {
+    local unit="$1"
+    if systemctl is-enabled "$unit" >/dev/null 2>&1; then
+        log_ok "systemd: $unit enabled (activates on boot)"
+        return 0
+    else
+        log_error "systemd: $unit NOT enabled — try 'sudo systemctl status $unit'"
         return 1
     fi
 }
