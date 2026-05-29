@@ -11,6 +11,7 @@
 | # | Name | Status | Closed in |
 |---|------|--------|-----------|
 | 1 | Decisions resolved + dry-run polish + shellcheck | done | Session 1 (2026-05-27) |
+| 2 | Second batch — contract-critical slice | done (slice; B/C/D deferred) | Session 2 (2026-05-28) |
 
 **Session counter:** contiguous 1–N, tracked by Code; all session files at [`docs/sessions/`](docs/sessions/). Chat-side sessions have their own threading and may diverge — Code's counter is authoritative.
 
@@ -18,13 +19,13 @@
 
 ## Current Status
 
-**Phase:** Pre-installation, decisions settled. Discipline docs + v4 setup scripts are in place and shellcheck-clean. The 5 design decisions are resolved. The application layer (the "second batch") hasn't been built yet — a real install completes steps 00-03 and dies at step 05, which the CLAUDE.md §1 orientation now states honestly.
+**Phase:** Application layer assembled. Plan 2's contract-critical slice built the 16 core artifacts (dlt NYC 311 pipeline, dbt bronze/gold/admin models, config + dbt-profile templates, semantic layer + Answer Agent, run-observability + profiling + portal-generator scripts, `run.sh`, nginx site, systemd units, first-boot portal) and honored the full F6 contract (backlog §A, C1-C5). **Static-verify only — never executed on EC2.** A real install should now proceed past step 05 and through the smoke test, but the first real EC2 run is Plan 3. The CLAUDE.md §1 caveat now reads "assembled and checked, not yet proven on metal."
 
-**Active decisions:** All 5 resolved 2026-05-27 — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). Settled inputs for Plan 2: NYC 311 smoke source, Tailscale required, smoke in main path with delete-me markers, repo name `stack-in-a-box`, Oxygen version pinned later (after first real install).
+**Active decisions:** All 5 resolved 2026-05-27 — see [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md). Inputs honored by Plan 2: NYC 311 smoke source, Tailscale required, smoke in main path with delete-me markers, repo name `stack-in-a-box`, Oxygen version still latest-from-get.oxy.tech (pin in Plan 4).
 
 **Active blockers:** None.
 
-**Last Updated:** 2026-05-28 (post-Plan-1 follow-up — flow dry-runs F6-F18 in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md). **F6-F8** (3): F6 forward contract check (pins the second-batch interface), F7 SG lockout (sound), F8 secrets lifecycle (solid). **F9-F18** (10): wrong-environment, second-batch-subtly-wrong, network degradation, concurrency/timers, reboot/stop-start, teardown, docs-as-read, orientation quality, cost, careless input. Batch-2 yield flattened — 0 critical/high, 4 lenses pure-validation; 4 in-plan fixes (F11 oxy-installer timeout, F18 PROJECT_NAME sed-injection guard, F15 README count, F16 orientation timing honesty), 4 deferred to Plan 2 prep (oxy-validate gate, timer-vs-manual collision, teardown doc, proxy hint). **Stop signal reached: across 29 dry runs the last 10 found no critical/high — next move is Plan 2 (second batch) then Plan 3 (real install), not more simulation.** All 13 scripts still pass shellcheck + bash -n. **Then:** consolidated every remaining recommended improvement from all dry-run sources + the handoff cross-batch flags + resolved-decision follow-ups into a single plan-tagged punch-list, [`docs/design/IMPROVEMENTS_BACKLOG.md`](docs/design/IMPROVEMENTS_BACKLOG.md) (sections A-F: Plan 2 contract + improvements + docs + small fixes, Plan 3 install, Plan 4+ optional). Batching surfaced a broken cross-reference — README/CLAUDE.md/TASKS all pointed at "STACK_IN_A_BOX_PLAN.md §9" but the design plan ended at §8; the 16-artifact list lived only in the handoff. Fixed by adding a real §9 to the design plan. TASKS.md Plan 2 entry now points at the backlog as the single source of truth.).
+**Last Updated:** 2026-05-28 (Plan 2 contract-critical slice shipped — branch `claude/plan-2-second-batch-slice`, 5 commits G1-G5 + G6 docs. Built the data path (dlt `smoke_test_pipeline.py` → bronze `raw_nyc_311` → gold `fct_smoke_test` + dims → admin `fct_test_run`/`dim_data_quality_test`), the trust-contract path (3 Airlayer views + topic + `answer_agent.agent.yml` + `docs/schema.sql` + 2 seed limitations + index generator), the observability + portal layer (`pipeline_run_start`/`_end`, `profile_tables`, `check_profile_staleness`, `source_health_check`, `_nav` + 4 generators), and the orchestration + serving layer (`run.sh` 10-stage, `nginx/stack-in-a-box.conf`, 7 systemd units, first-boot `portal/index.html`). All DUCKDB_PATH derivations repo-root-relative; dbt profile name + Oxygen db name hardcoded (`stack_in_a_box`/`warehouse`) so only `{{DUCKDB_PATH}}`/`{{PROJECT_NAME}}` tokens remain. Static verification: py_compile (all .py), YAML parse (11 files + limitations index), `bash -n` + shellcheck (run.sh clean), generate_metrics_page run locally → valid HTML, token audit (only `{{PROJECT_ROOT}}` in units), index.html matches 07 gate regex, full read-cross-check against 07/09/10. Backlog §A marked SATISFIED; B/C/D deferred. **Next: Plan 3 — first real EC2 install.**).
 
 ---
 
@@ -32,13 +33,22 @@
 
 Corrected dependency chain (the original ordering had first-install before the second batch; Plan 1's dry-run showed first-install is impossible until the second batch ships):
 
-1. **Plan 2 — The second batch.** Build the 16 missing artifacts per [`docs/design/STACK_IN_A_BOX_PLAN.md`](docs/design/STACK_IN_A_BOX_PLAN.md) §9, against the settled decisions. Estimated 10-14 hours. Removes the CLAUDE.md §1 "Current install state" caveat as part of its housekeeping.
-2. **Plan 3 — First real install** on a fresh t4g.medium EC2. ~90 minutes. Captures the working Oxygen version.
+1. ~~**Plan 2 — The second batch.**~~ **Contract-critical slice SHIPPED** (Session 2) — the 16 core artifacts + the F6 contract (backlog §A). **B/C/D remain open** (deferred from the slice): B = oxy-validate gate, lock-aware run.sh, timer ordering, ssh-re-enable warn, `make rip-out-smoke-test`; C = HARDENING / SWAP_IN_YOUR_DATA / ARCHITECTURE / SETUP / TEARDOWN docs; D = small fixes (E1 proxy hint, E2 `--force` note). A Plan 2 follow-on or Plan 3's hardening pass picks these up.
+2. **Plan 3 — First real install** on a fresh t4g.medium EC2. ~90 minutes. The validation no dry run can substitute for. Captures the working Oxygen version; full removal of the §1 caveat lands here.
 3. **Plan 4 — Retroactive Oxygen version pin** per decision #4 + Plan 3 findings.
 
 ---
 
 ## Recent Sessions
+
+### Session 2 — 2026-05-28 22:29 EDT — plan-2-second-batch-slice
+[full narrative](docs/sessions/session-2-2026-05-28-plan-2-second-batch-slice.md)
+
+- **Goal:** Build Plan 2's contract-critical slice — the minimum application layer to get a real install past step 05 and through the smoke test, honoring the F6 contract; static-verify only.
+- **Shipped:** 16 core artifacts in 5 commit groups (data path, trust-contract path, observability + portal generators, orchestration + serving) + G6 docs. F6 contract (§A C1-C5) satisfied; all static gates green.
+- **Decisions:** 3 — see Decisions Log.
+- **Status:** complete
+- **Next:** Plan 3 — first real EC2 install.
 
 ### Session 1 — 2026-05-27 — plan-1-decisions-and-dry-run-polish
 
@@ -60,6 +70,9 @@ _None._
 
 | Date | Decision | Status |
 |---|---|---|
+| 2026-05-28 | dbt profile name + Oxygen db name **hardcoded** (`stack_in_a_box` / `warehouse`), not tokenized — a hyphenated `{{PROJECT_NAME}}` can't be a dbt profile name, and a fixed Oxygen db name keeps the agent's `database: warehouse` reference stable across a PROJECT_NAME override. Only `{{DUCKDB_PATH}}`/`{{PROJECT_NAME}}` tokens remain (C3-safe). | active |
+| 2026-05-28 | `/docs` served from a **docroot subdirectory** (`run.sh` copies dbt/target into `$DOCROOT/docs/`), not an nginx `alias` to `dbt/target` — script 07 copies the nginx conf verbatim, so an alias would couple it to the install dir; a docroot subdir keeps it path-independent. | active |
+| 2026-05-28 | `run.sh` `deploy_html` made **sudo-aware** — script 07 (frozen batch-1) creates the docroot `www-data:755` (not ubuntu-writable), but `run.sh` runs as ubuntu; deploys route through `sudo` when the docroot isn't writable (default EC2 ubuntu has passwordless sudo). Only real batch-1↔batch-2 integration seam found. | active |
 | 2026-05-27 | Tailscale **required** (not optional) — cleaner security posture, free-tier covers the audience. | active |
 | 2026-05-27 | Smoke source = **NYC 311** (SODA `erm2-nwe9`) — highest pipeline reuse, well-documented API. | active |
 | 2026-05-27 | Smoke test lives in **main path** with delete-me markers + `make rip-out-smoke-test` (lands in Plan 2). | active |

@@ -11,9 +11,11 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 
 **Plan 1 done 2026-05-27** — [x] Decisions resolved + dry-run polish + shellcheck pass. All 5 open decisions in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md) RESOLVED; honesty disconnects fixed (CLAUDE.md §1 "Current install state" caveat, design plan §8 reframe, script 05 real repo URL); 13 v4 scripts pass shellcheck; flow-level dry-runs in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md).
 
-**Plan 2 (next)** — [ ] The second batch. Build the 16 missing artifacts per [`docs/design/STACK_IN_A_BOX_PLAN.md`](docs/design/STACK_IN_A_BOX_PLAN.md) §9 (run.sh, requirements.txt, config.example.yml, dbt models, dlt smoke pipeline for NYC 311, semantic-layer YAML, agent YAML, systemd units, portal generators, helper scripts). Estimated 10-14 hours. Unblocks a real end-to-end install. **The consolidated punch-list of everything Plan 2 must honor and fold in — the F6 hard contract (table names, DuckDB path, token whitelist, docroot, run.sh outputs), the B-items (oxy-validate gate, lock-aware run.sh + orphaned-run cleanup, timer ordering, tailscale-SSH health check, `make rip-out-smoke-test`), the doc batch (HARDENING / SWAP_IN_YOUR_DATA / ARCHITECTURE / SETUP / TEARDOWN), and the small fixes (preflight proxy hint, the `--force` note, removing the CLAUDE.md §1 caveat) — lives in [`docs/design/IMPROVEMENTS_BACKLOG.md`](docs/design/IMPROVEMENTS_BACKLOG.md) sections A-D.** That backlog is the single source of truth; work from it rather than re-mining the findings docs.
+**Plan 2 contract-critical slice done 2026-05-28** — [x] The second batch's 16 core artifacts + the F6 hard contract. Built in 5 commit groups on `claude/plan-2-second-batch-slice` (G1 config templates `355691b`, G2 dlt + dbt models `c69027b`, G3 semantic layer + agent + limitations `7cc46d7`, G4 observability + portal generators `0f8489b`, G5 run.sh + nginx + systemd + portal `2e68391`, G6 docs). Backlog §A (C1-C5) SATISFIED — verified by read-cross-check against scripts 07/09/10. Static-verify only (py_compile, YAML parse, `bash -n`, shellcheck) — **never run on EC2**; live gates are Plan 3.
 
-**Plan 3** — [ ] First real install on a fresh t4g.medium EC2. Budget ~90 minutes (60 install + 30 buffer for "the one thing we forgot"). Captures which Oxygen version actually works end-to-end.
+**Plan 2 follow-on (open)** — [ ] B/C/D from [`docs/design/IMPROVEMENTS_BACKLOG.md`](docs/design/IMPROVEMENTS_BACKLOG.md), deferred from the slice: B = oxy-validate gate, lock-aware run.sh + orphaned-run cleanup, timer ordering, tailscale-SSH health check, `make rip-out-smoke-test`; C = HARDENING / SWAP_IN_YOUR_DATA / ARCHITECTURE / SETUP / TEARDOWN docs; D = preflight proxy hint, `--force` note. Can fold into Plan 3's hardening pass.
+
+**Plan 3 (next)** — [ ] First real install on a fresh t4g.medium EC2. Budget ~90 minutes (60 install + 30 buffer for "the one thing we forgot"). Captures which Oxygen version actually works end-to-end. Full removal of the CLAUDE.md §1 caveat lands here once the install completes green.
 
 **Plan 4** — [ ] Retroactive Oxygen version pin in `03_install_oxygen.sh`, per decision #4 and Plan 3's first-install findings.
 
@@ -24,6 +26,7 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 | # | Status | Notes |
 |---|---|---|
 | 1 | done | Decisions resolved + dry-run polish + shellcheck — Session 1, 2026-05-27 |
+| 2 | done (slice; B/C/D deferred) | Second batch contract-critical slice — 16 artifacts + F6 contract, static-verified — Session 2, 2026-05-28 |
 
 ---
 
