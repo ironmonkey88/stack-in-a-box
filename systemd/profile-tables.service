@@ -1,0 +1,20 @@
+[Unit]
+Description=Weekly column-profile regeneration
+# No oxy.service dependency — same rationale as pipeline-refresh.service.
+# Profiling is read-only on the profiled schemas (one brief append at the end).
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory={{PROJECT_ROOT}}
+EnvironmentFile=/etc/environment
+ExecStart={{PROJECT_ROOT}}/.venv/bin/python {{PROJECT_ROOT}}/scripts/profile_tables.py
+# Refresh the /profile page after regen. Best-effort deploy: the docroot is
+# www-data-owned (script 07), so go through sudo; `|| true` keeps a deploy
+# hiccup from marking the unit failed (the next daily run redeploys anyway).
+ExecStartPost={{PROJECT_ROOT}}/.venv/bin/python {{PROJECT_ROOT}}/scripts/generate_profile_page.py
+ExecStartPost=/bin/sh -c 'sudo cp {{PROJECT_ROOT}}/portal/profile.html /var/www/stack-in-a-box/profile.html || true'
+StandardOutput=journal
+StandardError=journal

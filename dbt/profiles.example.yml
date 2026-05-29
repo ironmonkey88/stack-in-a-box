@@ -1,0 +1,16 @@
+# dbt/profiles.example.yml — template for ~/.dbt/profiles.yml on a fresh box.
+#
+# scripts/setup/05_clone_and_config.sh copies this to ~/.dbt/profiles.yml and
+# substitutes {{DUCKDB_PATH}}. The top-level key (`stack_in_a_box`) is a FIXED
+# identifier that must match `profile:` in dbt_project.yml — it is deliberately
+# NOT token-substituted, so a PROJECT_NAME override can't break the match.
+#
+# Only {{DUCKDB_PATH}} is a token here (within the F6 two-token whitelist).
+stack_in_a_box:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Substituted by script 05 to $PROJECT_ROOT/data/stack.duckdb.
+      path: "{{DUCKDB_PATH}}"
+      threads: 4

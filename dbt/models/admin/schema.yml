@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: dim_data_quality_test
+    description: |
+      The dbt test catalog — one row per defined test, seeded once and frozen.
+      Built from dbt run-results (main_bronze.raw_dbt_results_raw). Lean
+      smoke-test version: dbt tests only, no row-count baselines yet.
+    columns:
+      - name: test_id
+        data_type: VARCHAR
+        description: 'Test identifier (dbt_test.<node_name>).'
+        data_tests:
+          - not_null
+          - unique
+      - name: test_type
+        data_type: VARCHAR
+        description: 'dbt_generic or dbt_singular.'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['dbt_generic', 'dbt_singular']
+
+  - name: fct_test_run
+    description: |
+      One row per dbt test per run (the /trust page reads this). Append-only;
+      built from main_bronze.raw_dbt_results_raw for the latest run.
+    columns:
+      - name: run_id
+        data_type: VARCHAR
+        description: 'dbt invocation id for the run.'
+        data_tests:
+          - not_null
+      - name: test_id
+        data_type: VARCHAR
+        description: 'Test identifier (dbt_test.<node_name>).'
+        data_tests:
+          - not_null
+      - name: status
+        data_type: VARCHAR
+        description: 'pass / warn / fail.'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['pass', 'warn', 'fail']

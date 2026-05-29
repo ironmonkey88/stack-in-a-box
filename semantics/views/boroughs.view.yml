@@ -1,0 +1,27 @@
+# 🚧 SMOKE TEST. Borough dimension over main_gold.dim_borough.
+name: boroughs
+description: "NYC boroughs -- dimension, one row per borough"
+table: main_gold.dim_borough
+datasource: warehouse
+
+entities:
+  - name: borough
+    type: primary
+    key: borough_id
+
+dimensions:
+  - name: borough_id
+    type: string
+    expr: borough_id
+    primary_key: true
+    description: "Surrogate PK -- md5(borough)"
+  - name: borough
+    type: string
+    expr: borough
+    description: "Borough label"
+
+measures:
+  - name: request_count
+    type: sum
+    expr: request_count
+    description: "Requests originating in this borough"

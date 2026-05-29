@@ -42,6 +42,12 @@ logs/
 # Oxygen runtime state
 .oxy_state/
 
+# Generated portal pages (regenerated each run.sh; index.html stays tracked)
+portal/metrics.html
+portal/trust.html
+portal/profile.html
+portal/erd.html
+
 # nginx / systemd / config substitutions
 config.yml
 !config.example.yml

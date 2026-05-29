@@ -1,0 +1,24 @@
+[Unit]
+Description=Oxygen workspace server (SPA + agents on :3000)
+# Critical: oxy start manages a postgres container via docker, so it must
+# start AFTER docker is up. Without Requires/After=docker.service the unit
+# races docker on reboot and crashes bringing up the container.
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory={{PROJECT_ROOT}}
+EnvironmentFile=/etc/environment
+# oxy lives in the user's ~/.local/bin (script 03). %h = the service user's
+# home, so this stays correct regardless of username.
+ExecStart=%h/.local/bin/oxy start --local
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

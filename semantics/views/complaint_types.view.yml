@@ -1,0 +1,35 @@
+# 🚧 SMOKE TEST. Complaint-type dimension over main_gold.dim_complaint_type.
+name: complaint_types
+description: "NYC 311 complaint types -- dimension, one row per distinct type"
+table: main_gold.dim_complaint_type
+datasource: warehouse
+
+entities:
+  - name: complaint_type
+    type: primary
+    key: complaint_type_id
+
+dimensions:
+  - name: complaint_type_id
+    type: string
+    expr: complaint_type_id
+    primary_key: true
+    description: "Surrogate PK -- md5(complaint_type)"
+  - name: complaint_type
+    type: string
+    expr: complaint_type
+    description: "Complaint type label"
+  - name: first_seen_dt
+    type: date
+    expr: first_seen_dt
+    description: "Earliest request date observed for this type"
+  - name: last_seen_dt
+    type: date
+    expr: last_seen_dt
+    description: "Latest request date observed for this type"
+
+measures:
+  - name: request_count
+    type: sum
+    expr: request_count
+    description: "Requests of this complaint type"

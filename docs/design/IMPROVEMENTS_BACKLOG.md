@@ -8,17 +8,19 @@ One place for every recommended improvement surfaced across all dry-run work and
 
 ---
 
-## A. Plan 2 — contract the second batch MUST honor (P0)
+## A. Plan 2 — contract the second batch MUST honor (P0) — ✅ SATISFIED
 
 These aren't "improvements to add" — they're constraints. The v4 setup scripts already hard-code these names/paths in their verify gates; if the second-batch artifacts don't match, the install fails even when it "worked." Source: dry-run F6.
 
-| ID | Requirement | Source |
-|---|---|---|
-| C1 | Gold smoke model is exactly `main_gold.fct_smoke_test`; admin pipeline-run table is exactly `main_admin.fct_pipeline_run_raw`. (Hard-coded in `09_first_run.sh` + `10_verify.sh`.) | F6-1 |
-| C2 | DuckDB file is `$PROJECT_ROOT/data/stack.duckdb` — `run.sh`, `config.yml`, and `dbt/profiles.yml` must all resolve to it. | F6-2 |
-| C3 | `config.example.yml` and `dbt/profiles.example.yml` may use ONLY `{{PROJECT_NAME}}` and `{{DUCKDB_PATH}}` tokens — any other `{{...}}` trips `05`'s unsubstituted-token die. | F6-5 |
-| C4 | `nginx/stack-in-a-box.conf` must hardcode docroot `/var/www/stack-in-a-box` (script `07` copies it verbatim — no token substitution). | F6-3, F6 |
-| C5 | `run.sh manual` must populate C1's two tables AND deploy the 5 portal pages (`/metrics`, `/trust`, `/profile`, `/erd`, plus dbt `/docs/`) to `/var/www/stack-in-a-box/` — NOT to `$PROJECT_ROOT/portal/`. (`10_verify` checks these routes return 200.) | F6-4, handoff §10.1 |
+**Status: all five satisfied by Plan 2's contract-critical slice** (commits `355691b` G1, `c69027b` G2, `7cc46d7` G3, `0f8489b` G4, `2e68391` G5). Verified statically by a read-cross-check against `07_nginx_site.sh`, `09_first_run.sh`, and `10_verify.sh` — every name/path/route those gates assert is now produced. **Not yet proven on EC2** (that's Plan 3 / section E).
+
+| ID | Requirement | Source | Satisfied by |
+|---|---|---|---|
+| C1 | Gold smoke model is exactly `main_gold.fct_smoke_test`; admin pipeline-run table is exactly `main_admin.fct_pipeline_run_raw`. (Hard-coded in `09_first_run.sh` + `10_verify.sh`.) | F6-1 | ✅ `dbt/models/gold/fct_smoke_test.sql` (`schema='gold'`→`main_gold`); `scripts/pipeline_run_start.py` DDL creates `main_admin.fct_pipeline_run_raw` |
+| C2 | DuckDB file is `$PROJECT_ROOT/data/stack.duckdb` — `run.sh`, `config.yml`, and `dbt/profiles.yml` must all resolve to it. | F6-2 | ✅ all scripts derive `REPO_ROOT/data/stack.duckdb`; `config.example.yml`+`dbt/profiles.example.yml` use `{{DUCKDB_PATH}}` |
+| C3 | `config.example.yml` and `dbt/profiles.example.yml` may use ONLY `{{PROJECT_NAME}}` and `{{DUCKDB_PATH}}` tokens — any other `{{...}}` trips `05`'s unsubstituted-token die. | F6-5 | ✅ profiles uses only `{{DUCKDB_PATH}}`; config uses `{{DUCKDB_PATH}}` + `{{PROJECT_NAME}}` (header comment); dbt profile name + Oxygen db name hardcoded (`stack_in_a_box` / `warehouse`) |
+| C4 | `nginx/stack-in-a-box.conf` must hardcode docroot `/var/www/stack-in-a-box` (script `07` copies it verbatim — no token substitution). | F6-3, F6 | ✅ docroot hardcoded; `/docs/` served from a docroot subdir (no install-dir alias) so verbatim-copy stays correct |
+| C5 | `run.sh manual` must populate C1's two tables AND deploy the 5 portal pages (`/metrics`, `/trust`, `/profile`, `/erd`, plus dbt `/docs/`) to `/var/www/stack-in-a-box/` — NOT to `$PROJECT_ROOT/portal/`. (`10_verify` checks these routes return 200.) | F6-4, handoff §10.1 | ✅ `run.sh` 10-stage: dlt→dbt→admin populates both tables; `deploy_html` (sudo-aware) deploys all 4 generated pages + dbt docs to the docroot |
 
 ---
 
@@ -57,7 +59,7 @@ Cheap items against *existing* scripts. Deferred to Plan 2 only because Plan 2 w
 |---|---|---|---|
 | E1 | **Preflight proxy hint.** Add "if you're behind an HTTP proxy, `export https_proxy` before running" to `00_preflight.sh`'s network-failure message. Today a filtered-egress VPC sees 6 "unreachable" failures with no hint why. | F9-b | One log line. |
 | E2 | **`--force` note for partial-install reruns.** If Plan 2 modifies any of scripts `00-03`, document that partial-install users must `bootstrap.sh --force` (or clear `scratch/checkpoints/`) to pick up the change — checkpointed steps are otherwise skipped silently. | F5-b | A README/CLAUDE note, contingent on Plan 2 touching 00-03. |
-| E3 | **Remove the CLAUDE.md §1 "Current install state" caveat** as part of Plan 2's housekeeping, once the install actually completes end-to-end. | Plan 1 (C3) | The caveat is self-marked "removed when Plan 2 lands." |
+| E3 | ~~**Remove the CLAUDE.md §1 "Current install state" caveat**~~ — **UPDATED, not removed** (commit in Plan 2 G6). The slice is static-verify only, so removing the caveat would over-claim. It now reads "assembled and checked, not yet proven on metal" and is self-marked for replacement with a "validated on EC2" note when Plan 3 lands. | Plan 1 (C3) | Full removal moves to Plan 3. |
 
 ---
 
@@ -83,8 +85,8 @@ Cheap items against *existing* scripts. Deferred to Plan 2 only because Plan 2 w
 
 ## How to use this backlog
 
-- **Plan 2 picks up A (honor as constraints) + B + C + D.** A is non-negotiable; B/C/D are the improvement content. The 16 missing artifacts from design-plan §9 are Plan 2's core build — this backlog is the *additional* hardening + docs to fold in alongside them.
-- **Plan 3 is E.** It's gated on Plan 2 (no install completes until the second batch ships).
+- **Plan 2's contract-critical slice shipped A** (the non-negotiable constraints) + the 16 core artifacts from design-plan §9. **B, C, and D remain open** — they were deliberately deferred from the slice (scope: build the minimum to get a real install past step 05 and through the smoke test, honoring the F6 contract, static-verify only). A Plan 2 follow-on (or Plan 3's hardening pass) should pick up B (oxy validate gate, lock-aware run.sh, timer ordering, ssh-re-enable warn, `make rip-out-smoke-test`), C (HARDENING / SWAP_IN_YOUR_DATA / ARCHITECTURE / SETUP / TEARDOWN docs), and D (small fixes E1/E2; E3 already updated).
+- **Plan 3 is E.** It's gated on Plan 2's slice (which has shipped) — the box is now assembled; Plan 3 is the first real EC2 run.
 - **Plan 4+ is F.**
 - Each item cites its source finding so the full context is one grep away (`grep -rn "F12-b\|§10" docs/design/`).
 - When an item ships, strike it here (or note the commit) so the backlog stays a live punch-list, not a stale wish-list.

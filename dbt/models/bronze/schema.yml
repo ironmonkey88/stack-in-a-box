@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: bronze_raw
+    description: |
+      Raw landing tables written directly by dlt. Owned by the pipeline, not
+      dbt; dbt sees them through `source()` for lineage but does not
+      materialize them.
+    schema: main_bronze
+    tables:
+      - name: raw_nyc_311_raw
+        description: |
+          🚧 SMOKE TEST. dlt merge target for the NYC 311 SODA API
+          (https://data.cityofnewyork.us/resource/erm2-nwe9.json). Merge key
+          `unique_key`. Volume depends on SMOKE_MODE (small/medium/large).
+          Audit columns: _extracted_at, _extracted_run_id, _first_seen_at,
+          _source_endpoint, plus dlt's _dlt_load_id / _dlt_id.
+
+models:
+  - name: raw_nyc_311
+    description: |
+      🚧 SMOKE TEST. Bronze view over the NYC 311 mirror. Arrival data only —
+      type casts and business logic are deferred to gold.
+    columns:
+      - name: unique_key
+        data_type: VARCHAR
+        description: 'NYC 311 service-request ID. Primary key from source; the dlt merge key.'
+        data_tests:
+          - not_null
+          - unique
+      - name: created_date
+        data_type: VARCHAR
+        description: 'Request creation timestamp (VARCHAR at bronze; cast to TIMESTAMP in gold).'
+        data_tests:
+          - not_null
+      - name: complaint_type
+        data_type: VARCHAR
+        description: 'Top-level complaint category (e.g. "Noise - Residential").'
+      - name: borough
+        data_type: VARCHAR
+        description: 'NYC borough. May be NULL or "Unspecified" at source.'
+      - name: status
+        data_type: VARCHAR
+        description: 'Request status (Open / Closed / In Progress / etc.).'
