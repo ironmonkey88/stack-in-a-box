@@ -2,7 +2,7 @@
 
 **Companion to:** [`plan-2-second-batch-slice.md`](plan-2-second-batch-slice.md)
 **Session:** [2](../sessions/session-2-2026-05-28-plan-2-second-batch-slice.md)
-**PR:** [#2](https://github.com/ironmonkey88/stack-in-a-box/pull/2)
+**PR:** [#6](https://github.com/ironmonkey88/stack-in-a-box/pull/6)
 **Date:** 2026-05-28
 **Status:** complete (slice as scoped; B/C/D deferred per the prompt)
 
