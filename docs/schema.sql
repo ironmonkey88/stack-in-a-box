@@ -155,16 +155,21 @@ CREATE TABLE IF NOT EXISTS main_admin.fct_test_run (
     failure_message     VARCHAR
 );
 
--- Per-column profile snapshot. Owned by scripts/profile_tables.py.
--- Observational only — never fails a run. The /profile page reads it.
-CREATE TABLE IF NOT EXISTS main_admin.fct_data_profile (
+-- Per-column profile snapshot, append-only. Owned by scripts/profile_tables.py.
+-- Observational only — never fails a run. The /profile page reads it. (Wider
+-- than shown: also carries type-specific stats — min/max/mean/quantiles for
+-- numerics, min/max/span for dates, length + top-5 values for text.)
+CREATE TABLE IF NOT EXISTS main_admin.fct_column_profile_raw (
+    profile_id          TEXT,     -- PK — ULID per (column, profile run)
     profiled_at         TIMESTAMP,
-    table_schema        VARCHAR,
-    table_name          VARCHAR,
-    column_name         VARCHAR,
-    data_type           VARCHAR,
+    run_id              TEXT,     -- run.sh RUN_ID, for traceability
+    schema_name         TEXT,
+    table_name          TEXT,
+    column_name         TEXT,
+    column_type         TEXT,
     row_count           BIGINT,
+    non_null_count      BIGINT,
     null_count          BIGINT,
-    pct_null            DOUBLE,
+    null_pct            DOUBLE,
     distinct_count      BIGINT
 );
