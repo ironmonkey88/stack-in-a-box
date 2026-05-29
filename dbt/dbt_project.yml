@@ -1,0 +1,40 @@
+name: 'stack_in_a_box'
+version: '1.0.0'
+config-version: 2
+
+# Must match the top-level key in ~/.dbt/profiles.yml. This is a fixed
+# identifier (underscores — dbt project/profile names can't contain
+# hyphens), NOT the hyphenated PROJECT_NAME used for display. Keeping it
+# stable means a PROJECT_NAME override never breaks the dbt profile match.
+profile: 'stack_in_a_box'
+
+model-paths: ['models']
+seed-paths: ['seeds']
+test-paths: ['tests']
+analysis-paths: ['analyses']
+macro-paths: ['macros']
+snapshot-paths: ['snapshots']
+
+target-path: 'target'
+clean-targets:
+  - 'target'
+  - 'dbt_packages'
+
+# Materializations per medallion tier. DuckDB's default catalog is `main`,
+# so `+schema: gold` yields the physical schema `main_gold` — which is why
+# the gold smoke fact lands at `main_gold.fct_smoke_test` (the contract the
+# setup-script verify gates check). Same for `main_admin`, `main_bronze`.
+models:
+  stack_in_a_box:
+    bronze:
+      +schema: bronze
+      +materialized: view
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table
+    admin:
+      +schema: admin
+      +materialized: table

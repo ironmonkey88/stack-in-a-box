@@ -1,0 +1,21 @@
+# config.example.yml — Oxygen workspace config for {{PROJECT_NAME}}.
+#
+# scripts/setup/05_clone_and_config.sh copies this to config.yml and
+# substitutes {{PROJECT_NAME}} (display) + {{DUCKDB_PATH}} (warehouse file).
+# Those are the ONLY two tokens permitted here — script 05's verify gate
+# dies if any other {{...}} survives.
+#
+# The Oxygen database NAME is the fixed identifier `warehouse` (NOT the
+# hyphenated PROJECT_NAME) so the Answer Agent's `database: warehouse`
+# reference stays stable regardless of a PROJECT_NAME override.
+
+models:
+  - name: claude-opus-4-7
+    vendor: anthropic
+    model_ref: claude-opus-4-7
+    key_var: ANTHROPIC_API_KEY
+
+databases:
+  - name: warehouse
+    type: duckdb
+    dataset: "{{DUCKDB_PATH}}"
