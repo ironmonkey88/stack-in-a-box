@@ -1,0 +1,8 @@
+# 🚧 SMOKE TEST topic. Groups the NYC 311 smoke-test views for the Answer
+# Agent. Delete with the rest of the smoke test; your real topic(s) replace it.
+name: smoke_test
+description: "NYC 311 service request data (smoke test)"
+views:
+  - smoke_test
+  - complaint_types
+  - boroughs

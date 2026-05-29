@@ -1,0 +1,71 @@
+# 🚧 SMOKE TEST semantic view over the gold fact. Delete with the rest of
+# the smoke test; your real fact view replaces it. The Answer Agent reads
+# this (via the smoke_test topic) to answer NYC 311 questions.
+name: smoke_test
+description: "NYC 311 service requests -- fact, one row per request (grain: unique_key)"
+table: main_gold.fct_smoke_test
+datasource: warehouse
+
+entities:
+  - name: request
+    type: primary
+    key: request_sk
+  - name: complaint_type
+    type: foreign
+    key: complaint_type_id
+  - name: borough
+    type: foreign
+    key: borough_id
+
+dimensions:
+  - name: request_sk
+    type: string
+    expr: request_sk
+    primary_key: true
+    description: "Surrogate PK -- md5(unique_key)"
+  - name: unique_key
+    type: string
+    expr: unique_key
+    description: "Natural key from NYC 311"
+  - name: created_dt
+    type: date
+    expr: created_dt
+    description: "Request creation date"
+  - name: closed_dt
+    type: date
+    expr: closed_dt
+    description: "Request close date (NULL when still open)"
+  - name: complaint_type_id
+    type: string
+    expr: complaint_type_id
+    description: "FK to complaint_types view"
+  - name: complaint_type
+    type: string
+    expr: complaint_type
+    description: "Complaint type label (denormalized for convenience)"
+  - name: borough_id
+    type: string
+    expr: borough_id
+    description: "FK to boroughs view"
+  - name: borough
+    type: string
+    expr: borough
+    description: "Borough label (denormalized for convenience)"
+  - name: agency
+    type: string
+    expr: agency
+    description: "Responding agency acronym"
+  - name: status
+    type: string
+    expr: status
+    description: "Request status (Open / Closed / In Progress / ...)"
+
+measures:
+  - name: total_requests
+    type: count
+    description: "Total 311 service requests"
+  - name: open_requests
+    type: count
+    description: "Requests not yet closed (status != 'Closed')"
+    filters:
+      - expr: "status != 'Closed'"
