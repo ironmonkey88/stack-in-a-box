@@ -29,6 +29,13 @@ readonly REPO_URL="${TEMPLATE_REPO_URL:-$DEFAULT_REPO_URL}"
 readonly PROJECT_NAME="${PROJECT_NAME:-stack-in-a-box}"
 readonly DUCKDB_PATH="$PROJECT_ROOT/data/stack.duckdb"
 
+# PROJECT_NAME is interpolated into a `sed s|...|...|` replacement (config.yml +
+# dbt profiles). A name containing the sed delimiter or escape chars (| & \)
+# would silently mangle those files. Reject it up front (dry-run F18).
+if [[ "$PROJECT_NAME" != "${PROJECT_NAME//[|&\\]/}" ]]; then
+    die "PROJECT_NAME ('$PROJECT_NAME') contains | & or backslash, which break the sed substitution into config.yml. Choose a simpler name."
+fi
+
 main() {
     log_step "05 — clone template + configure"
     require_not_root

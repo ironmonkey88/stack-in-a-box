@@ -24,7 +24,7 @@
 
 **Active blockers:** None.
 
-**Last Updated:** 2026-05-28 (post-Plan-1 follow-up — 3 more flow dry-runs F6-F8 in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md): F6 forward contract check (highest-value — pins the second-batch interface: exact table names, DuckDB path, token whitelist, docroot, run.sh outputs), F7 AWS SG lockout sequence (sound; self-check labeled best-effort), F8 secrets lifecycle (posture solid). 2 in-plan fixes — design plan §4 token convention corrected, 10_verify SG self-check comment. The F6 contract is now an inherited requirement on Plan 2.).
+**Last Updated:** 2026-05-28 (post-Plan-1 follow-up — flow dry-runs F6-F18 in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md). **F6-F8** (3): F6 forward contract check (pins the second-batch interface), F7 SG lockout (sound), F8 secrets lifecycle (solid). **F9-F18** (10): wrong-environment, second-batch-subtly-wrong, network degradation, concurrency/timers, reboot/stop-start, teardown, docs-as-read, orientation quality, cost, careless input. Batch-2 yield flattened — 0 critical/high, 4 lenses pure-validation; 4 in-plan fixes (F11 oxy-installer timeout, F18 PROJECT_NAME sed-injection guard, F15 README count, F16 orientation timing honesty), 4 deferred to Plan 2 prep (oxy-validate gate, timer-vs-manual collision, teardown doc, proxy hint). **Stop signal reached: across 29 dry runs the last 10 found no critical/high — next move is Plan 2 (second batch) then Plan 3 (real install), not more simulation.** All 13 scripts still pass shellcheck + bash -n.).
 
 ---
 
