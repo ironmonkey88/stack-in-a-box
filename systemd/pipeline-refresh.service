@@ -1,0 +1,16 @@
+[Unit]
+Description=stack-in-a-box pipeline daily refresh
+# No oxy.service dependency by design: dlt + dbt write to DuckDB directly and
+# Oxygen reads concurrently. Coupling to oxy.service would block scheduled
+# refreshes whenever Oxygen restarts.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory={{PROJECT_ROOT}}
+EnvironmentFile=/etc/environment
+ExecStart={{PROJECT_ROOT}}/run.sh daily
+StandardOutput=journal
+StandardError=journal

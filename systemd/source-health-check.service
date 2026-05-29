@@ -1,0 +1,15 @@
+[Unit]
+Description=stack-in-a-box source-health check (hourly)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory={{PROJECT_ROOT}}
+EnvironmentFile=/etc/environment
+# 🚧 SMOKE TEST — checks the NYC 311 SODA feed. source_health_check.py is
+# parameterized on a dataset slug; add your own sources and sibling units.
+ExecStart={{PROJECT_ROOT}}/.venv/bin/python {{PROJECT_ROOT}}/scripts/source_health_check.py nyc-311
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,10 @@
+[Unit]
+Description=stack-in-a-box hourly source-health check schedule
+Requires=source-health-check.service
+
+[Timer]
+OnCalendar=*-*-* *:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
