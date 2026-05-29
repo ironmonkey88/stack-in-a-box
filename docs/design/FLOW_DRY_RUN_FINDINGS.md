@@ -8,6 +8,8 @@ These are **simulations** — Code reading the docs + scripts as a user would ex
 
 **Tally (2026-05-28 follow-up, scenarios F6-F8): 3 scenarios, 9 findings (0 critical, 1 high, 5 medium, 3 low/cosmetic). 2 fixed in-plan, 7 surfaced as Plan-2-prep contract requirements or documented-and-accepted. The high (F6-1) is a hard interface contract Plan 2 must honor, not a current bug.**
 
+**Tally (2026-05-28 batch 2, scenarios F9-F18): 10 scenarios, 11 findings (0 critical, 0 high, 5 medium, 6 low/cosmetic). 4 fixed in-plan (F11, F15, F16, F18), 4 deferred to Plan 2 prep (F10, F12, F14 + the F9 proxy gap), 3 documented-and-accepted. Four of the ten lenses (F9, F13, F16-base, F17) substantially *validated* existing behavior rather than finding defects — the diminishing-returns signal is now empirical: new lenses still pay off, but the yield-per-lens has dropped from ~3 findings (F6-F8) to ~1.1 (F9-F18), and zero critical/high. This is the point to stop simulating and start the real install (Plan 3).**
+
 Severity vocabulary: Critical / High / Medium / Low / Cosmetic. Outcome vocabulary: Fixed in-plan / Mitigated / Deferred to Plan 2 / Documented and accepted.
 
 ---
@@ -124,6 +126,122 @@ Three additional flow-level passes, each a lens the Plan 1 set (F1-F5) didn't co
 
 ---
 
+# 2026-05-28 batch 2 — ten more dry runs (F9-F18)
+
+Ten further passes, each a lens not used in F1-F8. Honest framing up front: the yield dropped sharply. F6-F8 averaged ~3 findings each (one high); F9-F18 averaged ~1.1, none critical or high, and four lenses mostly *validated* existing behavior. The new-lens principle still held (every lens found *something* or confirmed *something* worth recording), but the curve has clearly flattened. Recorded in full anyway — including the "no defect found" results, because a validated lens is a real result.
+
+## Scenario F9 — wrong-environment matrix
+
+**Walk:** Run `00_preflight.sh` (and step 01) against the off-happy-path environments: Ubuntu 22.04, x86_64, t4g.small (2 GB RAM, below the 3500 MB floor), a 8 GB root volume (below the 10 GB floor), running as root, and behind a corporate HTTP proxy.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F9-a | 22.04 → `log_warn` "supported but 24.04 preferred", proceeds. x86_64 → `log_ok` (both arches accepted). RAM < 3500 MB → hard fail with the MB count. Disk < 10 GB → hard fail with the GB count. Root → hard fail "do not run as root". Each gives an actionable message and the right pass/warn/fail disposition. | — | **Validated** — preflight handles the wrong-environment matrix correctly; no defect. |
+| F9-b | **Corporate-proxy / egress-filtered network** is the one gap. The 6 network-reachability probes use plain `curl -sI` with no proxy awareness. Behind a proxy that requires `https_proxy`, all 6 read `000` and preflight hard-fails with "unreachable" — technically correct (the box genuinely can't reach them directly) but the message doesn't hint "are you behind a proxy?". A user on a filtered VPC would see 6 failures and not know why. | Low | **Deferred to Plan 2 prep** — add a one-line "if you're behind an HTTP proxy, export https_proxy before running" hint to the preflight failure path. Not fixed now: it's a message tweak in a script Plan 2 may otherwise touch, and the failure is at least loud + correct today. |
+
+**Verdict:** F9 mostly validates. Preflight is well-built for the common wrong-env cases; the proxy hint is the only gap, and it's cosmetic.
+
+## Scenario F10 — second batch shipped but subtly wrong
+
+**Walk:** Complement to F6. F6 asked "what contract must Plan 2 honor?" F10 asks "if Plan 2 honors the names/paths but makes *plausible* mistakes, does the install degrade honestly or fail silently?" Traced each plausible Plan-2 error against the existing verify gates.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F10-a | **Wrong dlt/dbt version in requirements.txt** → `04`'s verify gate runs `dlt --version` + `dbt --version` + the `python-ulid` import/construct check, so a version whose CLI/API changed is caught at step 04, not 15 minutes later. Covered. | — | **Validated** — the 04 verify gate is the guard. |
+| F10-b | **Smoke pull returns 0 rows** (NYC 311 API empty/filtered) → `09`'s `gold_count > 0` check fails → install reports failure honestly. **dbt test fails on smoke data** → captured-exit contract: run.sh completes, records the DQ failure, install "succeeds" with a trust-page caveat (the designed visible-failure behavior). Both degrade honestly. | — | **Validated** — data-shape failures surface, they don't hide. |
+| F10-c | **Malformed `agent.yml` / `view.yml` / `topic.yml`** is the real gap: **no setup script validates the semantic layer or agent config.** `09` runs `run.sh` (which builds the warehouse) and checks tables/rows, but nothing runs `oxy validate`. A syntactically broken agent or view passes every automated gate and only surfaces at `10`'s *manual browser* step ("ask the chat a question"). A user could see "10 — all curl-able checks passed" and a green install, then find the chat agent errors on first query. | Medium | **Deferred to Plan 2 prep** — Plan 2's `run.sh` (or a new pre-smoke step) should run `oxy validate` and fail loud on a bad semantic/agent config, so the automated gates cover config validity, not just data + routes + services. |
+
+**Verdict:** the verify gates cover data, routes, and services well; the blind spot is semantic-layer/agent-config *validity*, which currently only the manual browser step catches. One real deferred finding (F10-c).
+
+## Scenario F11 — network degradation / partial connectivity
+
+**Walk:** Not "no network" (preflight catches that) but degraded: slow-but-up `get.oxy.tech`, `apt` mirror flaking, IMDS disabled on a hardened AMI, Tailscale control-plane reachable but DERP relay blocked.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F11-a | **`03`'s Oxygen-installer fetch had no timeout** — `bash <(curl ... -LsSf "$OXY_INSTALLER_URL")` would hang indefinitely against a slow-but-reachable endpoint, with no way for the user to tell "hung" from "working." | Medium | **Fixed in-plan** — added `--connect-timeout 10 --max-time 120` to the installer curl; the die message now names a timeout/reachability cause. |
+| F11-b | Flaky apt → `set -e` halts step 01; idempotent re-run recovers. IMDS disabled → step 10's SG check already falls to the loud manual-verify warning (F7-3). Tailscale DERP blocked → `tailscale up` succeeds on the control plane and the verify checks backend-Running + Tailnet-IP (not end-to-end reachability, which is client-side anyway, consistent with F7). | — | **Validated** — the other degradation modes already degrade acceptably. |
+
+**Verdict:** one real fix (the installer timeout); the rest of the degradation surface was already handled.
+
+## Scenario F12 — concurrency / timer collision
+
+**Walk:** Two interacting concurrency surfaces: (a) two SSH sessions both run `bootstrap.sh`; (b) a systemd timer fires during the step-09 manual smoke test, putting two `run.sh` processes against one DuckDB file.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F12-a | **Double bootstrap** → `bootstrap.sh`'s `flock -n` on `/tmp/stack-in-a-box-bootstrap.lock` rejects the second invocation with a clear message. Covered. | — | **Validated** — the flock guard works. |
+| F12-b | **Timer-vs-manual collision.** Step 08 enables `pipeline-refresh.timer` (daily) + `source-health-check.timer` (hourly) + `profile-tables.timer` (weekly) *before* the step-09 smoke test runs. The hourly source-health timer can plausibly fire during a 15-25 min smoke test → two processes writing the DuckDB file → single-writer lock contention. (Today this is inert: the timers' ExecStart points at `run.sh`/helpers that don't exist until Plan 2, so they fail harmlessly. Post-Plan-2 the window is real.) Compounds with the v4 handoff §10 item 2 (run.sh needs orphaned-run cleanup for killed pipelines). | Medium | **Deferred to Plan 2 prep** — Plan 2's `run.sh` needs (1) a DuckDB-lock-aware retry/skip when another run holds the file, and (2) the orphaned-run cleanup already noted in handoff §10. Optionally, step 08 could enable timers *after* the first smoke run rather than before. |
+
+**Verdict:** bootstrap concurrency is guarded; the timer-vs-manual window is a real post-Plan-2 contract item, consistent with handoff §10.
+
+## Scenario F13 — reboot / stop-start / public-IP change
+
+**Walk:** A reboot at each stage; an EC2 stop-start (which changes the public IPv4 unless an Elastic IP is attached).
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F13-a | **Reboot mid-install** → step 01 already handles the kernel-update reboot via `exit 100` + bootstrap's resume. A reboot at any other stage: checkpoints live in `scratch/checkpoints/` (survive reboot), services are `enable`d (come back), user reconnects and reruns bootstrap (skips checkpointed steps). Resilient. | — | **Validated** — reboot resilience is built in. |
+| F13-b | **Stop-start changes the public IP** — and nothing in the install hardcodes the public IP into any persistent config. The portal binds `0.0.0.0:80` (reachable on whatever the current IP is); Tailnet access uses the stable Tailnet hostname/IP (written to `scratch/tailnet_identity.env`); step 10's SG check re-derives the *current* public IP from IMDS each run. So a public-IP change breaks nothing. This is a genuinely good property worth recording. | — | **Validated** — the install is correctly resilient to public-IP churn because it never pins the public IP. |
+
+**Verdict:** F13 fully validates. Both reboot and IP-change resilience are real and correct. Zero findings — recorded because "we checked and it's robust" is the result.
+
+## Scenario F14 — teardown / re-install from scratch
+
+**Walk:** A user wants to start over. There is no uninstall script (v4 handoff §11 lists it as out of scope). Trace what persists and whether a re-install collides with stale state.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F14-a | **No teardown story, and a `rm -rf repo && re-clone` leaves all system-level state**: `/etc/environment` (API key + OXY_DATABASE_URL + PATH edits), `/etc/systemd/system/*` units, the Docker engine + the oxy postgres container, the Tailscale node registration, the `/etc/nginx/sites-*` config, `/var/www/stack-in-a-box/`. A naive re-clone wipes only the repo (and its `scratch/checkpoints/`, forcing a full re-run from 00). | Low | **Deferred to Plan 2 prep** — a `TEARDOWN.md` checklist (or a `make teardown` / uninstall script) belongs with the HARDENING.md/SWAP_IN_YOUR_DATA.md doc batch in Plan 2. Not urgent (re-install is mostly idempotent), but the absence should be documented rather than discovered. |
+| F14-b | **Re-install on top is mostly idempotent** — `05` detects the existing `/etc/environment` key and *prompts to replace* (doesn't silently clobber); `07`/`08` re-deploy nginx + units idempotently. The one rough edge: re-running `06` with a *new* single-use Tailscale key when the node already exists may register a duplicate Tailnet node (cosmetic; the old node goes stale). | Cosmetic | **Documented and accepted** — duplicate-node is a Tailscale-admin cleanup, not an install bug. |
+
+**Verdict:** re-install is safer than expected (idempotent, prompts before clobbering the key); the gap is the *absence of a documented teardown*, deferred to Plan 2's doc batch.
+
+## Scenario F15 — docs read in natural order
+
+**Walk:** Read the docs in the order a new user hits them — README → CLAUDE.md → design plan / OPEN_DECISIONS — and check for internal contradictions now that Plan 1 + F6-F8 have edited several of them.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F15-a | README's `scripts/setup/` table row said "Dry-run-validated (11 iterations)" while the Status section said "11 script-level iterations + flow-level dry-runs." After F6-F8 + F9-F18, "(11 iterations)" undercounts (it's now 11 script + 18 flow). Minor internal inconsistency, and an undersell. | Cosmetic | **Fixed in-plan** — README table row reworded to "dry-run-validated at script + flow level and shellcheck-clean" (no brittle count). |
+| F15-b | The rest of the reading path coheres: README §Status, CLAUDE.md §1 caveat, design plan §8 ("required follow-up work"), and OPEN_DECISIONS (all RESOLVED) agree that the second batch is the gate to first install and that decisions are settled. The repo-name note (README line 7, decision #5) is consistent. No forward-reference-to-unexplained-thing problems. | — | **Validated** — cross-doc narrative is consistent. |
+
+**Verdict:** one cosmetic count-staleness fix; the rest of the doc narrative holds together.
+
+## Scenario F16 — orientation quality (what Claude would actually say)
+
+**Walk:** Not "does Claude orient" (F1) but "is the orientation CLAUDE.md §1 produces accurate and well-calibrated?" Simulated the literal orientation and graded it for over/under-claiming.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F16-a | Orientation step 5 stated "Wall clock: 35-60 minutes on a fresh EC2 instance" with no qualifier, then step 6 + the callout correctly say the install dies at step 05 today (~5 min). A Claude reciting both could lead with a 35-60 min figure that's currently false before the step-6 correction lands. | Low | **Fixed in-plan** — step 5 now reads "35-60 minutes ... *once the platform is complete* (see step 6 for what actually runs today)" + an explicit "do not present the 35-60 minute figure as today's reality." |
+| F16-b | The rest of §1 is well-calibrated: the discipline summary (step 4) is accurate, the Current install state callout is honest and even hands the user the literal die message, and the "let them make an informed choice" framing is right. | — | **Validated** — the orientation is honest once F16-a is fixed. |
+
+**Verdict:** one calibration fix to prevent a transient over-claim; otherwise the orientation is sound.
+
+## Scenario F17 — cost / resource consumption
+
+**Walk:** What does running this actually cost, and is the user informed / protected from runaway cost?
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F17-a | Install-time cost is trivial: t4g.medium (~$0.034/hr), the NYC 311 SODA pull is free, the single first-query Anthropic spend is cents. Ongoing: the instance left running is ~$24/mo; the daily `pipeline-refresh` timer accrues compute only (free API). **No runaway-cost risk** — no timer calls the paid LLM, and the smoke source is free. The one un-stated cost is "you left a t4g.medium running 24/7," which is the user's own provisioning decision. | Low | **Documented and accepted** — a one-line cost note could go in README/HARDENING in Plan 2's doc batch, but there's no runaway risk and the user owns the EC2 lifecycle. Thin lens. |
+
+**Verdict:** validated — no runaway-cost surface. The lens was worth one pass to confirm the daily timer doesn't quietly burn LLM spend (it doesn't).
+
+## Scenario F18 — careless / malicious input
+
+**Walk:** Adversarial / clumsy inputs: wrong key type, key with trailing whitespace, `PROJECT_NAME` with shell/sed metacharacters, `SMOKE_MODE=large` on an undersized box, a typosquatted `TEMPLATE_REPO_URL`.
+
+| # | Finding | Severity | Outcome |
+|---|---|---|---|
+| F18-a | **`PROJECT_NAME` with sed-delimiter chars** (`\|`, `&`, `\`) would silently mangle `config.yml` + `dbt/profiles.yml`, because `05` interpolates it into `sed s\|...\|$PROJECT_NAME\|`. Default (`stack-in-a-box`) is safe; the risk is a `PROJECT_NAME=...` override. | Medium | **Fixed in-plan** — `05` now rejects a `PROJECT_NAME` containing `\| & \\` up front with a clear die, before any substitution. |
+| F18-b | Wrong key type / trailing whitespace → `read_secret` rejects at entry (prefix check + whitespace check), already validated in F8. `SMOKE_MODE=large` on a 2 GB box → a run.sh/dlt concern (Plan 2), not a setup-script gap; the smoke modes are documented. Typosquatted `TEMPLATE_REPO_URL` → the user supplies it; the documented flow is clone-first (so the override rarely fires), and the `curl|bash` deny-list + the HTTPS-only Oxygen/Docker/Tailscale installers bound the blast radius. | — | **Validated / documented** — entry validation covers the key cases; the repo-URL trust is the user's (clone-first flow makes it largely moot). |
+
+**Verdict:** one real fix (the `PROJECT_NAME` sed-injection guard); the rest of the input surface was already validated at entry.
+
+---
+
 ## Meta-observation
 
 The flow-level lens converged faster than the script-level lens did. The v4 handoff's script-level dry-runs needed 11 iterations to mine out the catastrophic + structural bugs (2 critical, 7 high). The flow-level pass found 0 critical, 0 high — the serious issues were all caught at the script level. What flow-level surfaced was exactly what the prompt predicted: cross-document inconsistency (F2, the bulk of the findings) and technically-correct-but-misleading-in-context failure modes (F1's die message). These are "the docs disagree with each other" and "the error blames the wrong thing" problems — real, worth fixing, but not the catastrophic class.
@@ -132,8 +250,10 @@ This is a useful signal for whether more flow dry-runs are worth doing: **probab
 
 **Size comparison:** this doc is ~1/3 the size of `DRY_RUN_FINDINGS.md`. That ratio is itself the finding — flow-level issues are far less numerous than script-level were, because (a) the scripts were already hardened, and (b) the flow has fewer moving parts than 13 scripts' worth of edge cases. Flow-level dry-runs are worth doing once per major doc/flow change, not iterated like script-level.
 
-**2026-05-28 follow-up (F6-F8):** the Plan 1 meta-observation said "probably not many more [dry runs]" — and within the *same lens* (cross-doc consistency, orientation), that held. But F6-F8 deliberately opened **new lenses**, and each paid off: F6 (forward contract) was the highest-value pass of all eight because it converted the missing second batch into a precise interface spec and caught a real design-doc error (F6-3); F7 confirmed the lockout design is sound and labeled the one unreliable check; F8 confirmed the secrets posture. The lesson refines: *iterating the same lens* hits diminishing returns fast, but *a genuinely new lens* on the same artifacts can still surface a high-severity contract item. The remaining lenses worth a future pass are narrow (e.g., a v22.04 / x86 / undersized-instance "wrong environment" walk), and none should block — the next high-value validation is still the real EC2 install (Plan 3). F6's contract spec is the single most useful output for Plan 2.
+**2026-05-28 follow-up (F6-F8):** the Plan 1 meta-observation said "probably not many more [dry runs]" — and within the *same lens* (cross-doc consistency, orientation), that held. But F6-F8 deliberately opened **new lenses**, and each paid off: F6 (forward contract) was the highest-value pass of all eight because it converted the missing second batch into a precise interface spec and caught a real design-doc error (F6-3); F7 confirmed the lockout design is sound and labeled the one unreliable check; F8 confirmed the secrets posture. The lesson refines: *iterating the same lens* hits diminishing returns fast, but *a genuinely new lens* on the same artifacts can still surface a high-severity contract item. F6's contract spec is the single most useful output for Plan 2.
+
+**2026-05-28 batch 2 (F9-F18) — the curve flattened, empirically.** Ten more *new* lenses. The new-lens principle held in the weak sense (every lens recorded something), but the yield collapsed: ~1.1 findings/lens vs F6-F8's ~3, **zero critical or high**, four lenses (F9, F13, F16-base, F17) mostly *validated* existing behavior rather than finding defects. The findings that did land are a tier lower in severity — a missing curl timeout (F11, fixed), a sed-injection guard (F18, fixed), two doc/orientation calibrations (F15, F16, fixed), and three Plan-2-prep deferrals (F10-c `oxy validate` gate, F12-b timer-vs-manual collision, F14-a teardown doc). **This is the stop signal.** Across all 29 dry runs (11 script + 18 flow), the last 10 produced no critical/high and four pure validations. Continuing to simulate is now lower-value than the real EC2 install. **Recommendation: stop dry-running; the next move is Plan 2 (build the second batch against F6's contract), then Plan 3 (first real install).** A real install will find the class of bug no amount of reading can — external-service behavior, real timing, API-under-load — which is exactly the residue F9-F18 kept gesturing at ("this is a Plan 2 / run.sh concern") without being able to test.
 
 ---
 
-*Flow dry-runs F1-F5 completed 2026-05-27 (Plan 1, Session 1). Follow-up F6-F8 completed 2026-05-28. All simulations, not EC2 installs. Plan 3 is the real install.*
+*Flow dry-runs F1-F5 completed 2026-05-27 (Plan 1, Session 1). Follow-ups F6-F8 and F9-F18 completed 2026-05-28. All simulations, not EC2 installs. Plan 3 is the real install — and per the F9-F18 stop signal, the next high-value validation step.*

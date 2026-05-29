@@ -25,7 +25,7 @@ If you want to skip orientation and just run a script, this repo isn't for you. 
 | `DASHBOARDS.md` | Design standard for analyst-facing and end-user-facing dashboards. Thin in v1; fills out as the project accumulates dashboards. |
 | `LOG.md` | Captain's log — running record of sessions, decisions, blockers. Empty at repo creation; plans accumulate. |
 | `TASKS.md` | Task tracker — granular checkpoints with status markers. |
-| `scripts/setup/` | 13 v4 bash scripts that install the reference platform end-to-end on a fresh Ubuntu 24.04 ARM EC2 instance. Dry-run-validated (11 iterations); not yet executed on real EC2. |
+| `scripts/setup/` | 13 v4 bash scripts that install the reference platform end-to-end on a fresh Ubuntu 24.04 ARM EC2 instance. Dry-run-validated at script + flow level and shellcheck-clean; not yet executed on real EC2. |
 | `docs/design/` | The full design plan, the dry-run findings logs, and the 5 design decisions (resolved). |
 | `docs/handoffs/` | End-of-thread Code → Chat summaries spanning multiple plans. |
 | `docs/prompts/` | Per-work-item Chat-issued prompts + Code-issued reports. |

@@ -41,8 +41,10 @@ main() {
         # HTTPS-only and a minimum TLS version. For higher assurance,
         # download a specific release tarball with a known SHA256 from
         # github.com/oxy-hq/oxygen/releases.
-        if ! bash <(curl --proto '=https' --tlsv1.2 -LsSf "$OXY_INSTALLER_URL"); then
-            die "Oxygen installer failed"
+        # --connect-timeout / --max-time so a slow-but-reachable endpoint
+        # fails loud instead of hanging the install indefinitely (dry-run F11).
+        if ! bash <(curl --proto '=https' --tlsv1.2 --connect-timeout 10 --max-time 120 -LsSf "$OXY_INSTALLER_URL"); then
+            die "Oxygen installer failed (or timed out — check get.oxy.tech reachability)"
         fi
 
         # Verify the install actually produced a working binary — don't
