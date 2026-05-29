@@ -55,8 +55,12 @@ main() {
         fi
 
         tmp="$(mktemp)"
-        # Substitute {{PROJECT_ROOT}} → actual path
-        sed "s|{{PROJECT_ROOT}}|$PROJECT_ROOT|g" "$src" > "$tmp"
+        # Substitute {{PROJECT_ROOT}} → actual path, {{HOME_DIR}} → install
+        # user's home (for oxy.service's ExecStart — see oxy.service comment
+        # on why %h can't be used for a system unit).
+        sed -e "s|{{PROJECT_ROOT}}|$PROJECT_ROOT|g" \
+            -e "s|{{HOME_DIR}}|$HOME|g" \
+            "$src" > "$tmp"
 
         # Verify substitution worked — no lingering tokens
         if grep -q '{{' "$tmp"; then
