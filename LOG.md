@@ -34,7 +34,7 @@
 Corrected dependency chain (the original ordering had first-install before the second batch; Plan 1's dry-run showed first-install is impossible until the second batch ships):
 
 1. ~~**Plan 2 — The second batch.**~~ **Contract-critical slice SHIPPED** (Session 2) — the 16 core artifacts + the F6 contract (backlog §A). **B/C/D remain open** (deferred from the slice): B = oxy-validate gate, lock-aware run.sh, timer ordering, ssh-re-enable warn, `make rip-out-smoke-test`; C = HARDENING / SWAP_IN_YOUR_DATA / ARCHITECTURE / SETUP / TEARDOWN docs; D = small fixes (E1 proxy hint, E2 `--force` note). A Plan 2 follow-on or Plan 3's hardening pass picks these up.
-2. **Plan 3 — First real install** on a fresh t4g.medium EC2. ~90 minutes. The validation no dry run can substitute for. Captures the working Oxygen version; full removal of the §1 caveat lands here.
+2. **Plan 3 — First real install** on a fresh t4g.medium EC2. ~90 minutes. The validation no dry run can substitute for. Captures the working Oxygen version; full removal of the §1 caveat lands here. **Next-Code handoff:** [`docs/prompts/plan-3-first-real-install.md`](docs/prompts/plan-3-first-real-install.md) (preconditions + carried risks + gotchas).
 3. **Plan 4 — Retroactive Oxygen version pin** per decision #4 + Plan 3 findings.
 
 ---
