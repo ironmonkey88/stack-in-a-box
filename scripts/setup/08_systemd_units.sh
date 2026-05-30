@@ -55,8 +55,12 @@ main() {
         fi
 
         tmp="$(mktemp)"
-        # Substitute {{PROJECT_ROOT}} → actual path
-        sed "s|{{PROJECT_ROOT}}|$PROJECT_ROOT|g" "$src" > "$tmp"
+        # Substitute {{PROJECT_ROOT}} → actual path, {{HOME_DIR}} → install
+        # user's home (for oxy.service's ExecStart — see oxy.service comment
+        # on why %h can't be used for a system unit).
+        sed -e "s|{{PROJECT_ROOT}}|$PROJECT_ROOT|g" \
+            -e "s|{{HOME_DIR}}|$HOME|g" \
+            "$src" > "$tmp"
 
         # Verify substitution worked — no lingering tokens
         if grep -q '{{' "$tmp"; then
@@ -129,8 +133,14 @@ main() {
         if systemctl is-enabled "$timer" >/dev/null 2>&1; then
             log_ok "$timer already enabled"
         else
-            sudo systemctl enable --now "$timer"
-            log_ok "enabled: $timer"
+            # Enable for boot persistence, but do NOT `--now`: pipeline-refresh.timer
+            # has Persistent=true, so activating it mid-install fires an immediate
+            # catch-up `run.sh daily` that collides with step 09's smoke run on the
+            # DuckDB single-writer lock (dlt/dbt/oxy must touch the warehouse
+            # sequentially). Timers activate on next boot; the catch-up then runs
+            # safely with no concurrent manual run.
+            sudo systemctl enable "$timer"
+            log_ok "enabled: $timer (activates on next boot)"
         fi
     done
 
@@ -175,16 +185,19 @@ verify_gate() {
         failures=$((failures + 1))
     fi
 
-    # Timers active
+    # Timers enabled (boot-persistent). We deliberately do NOT require "active"
+    # here: activating them now would let pipeline-refresh.timer's Persistent
+    # catch-up fire a concurrent run.sh during install (see enable loop above).
+    # They activate on next boot.
     local timer
     for timer in "${TIMERS_TO_ENABLE[@]}"; do
         if [[ ! -f "$SYSTEMD_DST_DIR/$timer" ]]; then
             continue
         fi
-        if systemctl is-active "$timer" >/dev/null 2>&1; then
-            log_ok "$timer: active"
+        if systemctl is-enabled "$timer" >/dev/null 2>&1; then
+            log_ok "$timer: enabled (activates on boot)"
         else
-            log_error "$timer: not active"
+            log_error "$timer: not enabled"
             failures=$((failures + 1))
         fi
     done

@@ -130,8 +130,20 @@ verify_gate() {
         failures=$((failures + 1))
     fi
 
-    # Body contains the project name (proves OUR portal is serving, not nginx default)
-    if curl -s http://localhost/ | grep -qi "stack-in-a-box\|first-boot\|smoke test pending"; then
+    # Body contains the project name (proves OUR portal is serving, not nginx default).
+    # `systemctl reload nginx` is graceful: old workers can keep serving the
+    # previous (default-site) config for a brief window during cutover, so a
+    # single curl races the reload and intermittently sees the welcome page.
+    # Poll until our marker appears rather than curling exactly once.
+    local body_ok=0 body_attempt
+    for body_attempt in $(seq 1 10); do
+        if curl -s http://localhost/ | grep -qi "stack-in-a-box\|first-boot\|smoke test pending"; then
+            body_ok=1
+            break
+        fi
+        sleep 0.5
+    done
+    if [[ $body_ok -eq 1 ]]; then
         log_ok "portal body matches first-boot template"
     else
         log_error "portal body looks like default nginx welcome, not our portal"

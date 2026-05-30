@@ -91,12 +91,14 @@ main() {
     local start_ts end_ts elapsed
     start_ts="$(date +%s)"
 
-    # setsid + foreground wait pattern: detaches from terminal so SIGHUP
-    # doesn't propagate, but blocks on completion so we capture exit code.
-    # The trick: `setsid bash -c '...'` creates a new session; we still
-    # wait for it via the regular foreground process flow.
+    # setsid -w: detach from the controlling terminal (so an SSH SIGHUP
+    # doesn't kill the pipeline mid-run) AND wait for completion so we
+    # capture the real exit code. Plain `setsid` (no -w) returns the
+    # instant it forks the child into the new session, which made the
+    # verify gate below race the still-running pipeline (it saw an empty
+    # warehouse ~1s in). The -w is load-bearing.
     local run_exit=0
-    setsid bash -c "'$RUN_SH' manual 2>&1 | tee '$PROJECT_ROOT/logs/run.sh.log'" \
+    setsid -w bash -c "'$RUN_SH' manual 2>&1 | tee '$PROJECT_ROOT/logs/run.sh.log'" \
         || run_exit=$?
 
     # Protect the log file — it may contain debug output we'd rather not
