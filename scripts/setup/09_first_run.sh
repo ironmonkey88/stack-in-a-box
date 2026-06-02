@@ -63,6 +63,24 @@ main() {
     fi
     log_ok "ANTHROPIC_API_KEY present (starts with $(echo "$ANTHROPIC_API_KEY" | head -c 14)...)"
 
+    # ---------- oxy validate (config grammar gate; methodology R1 / backlog B1) ----------
+    # Validate config.yml + agent + view/topic YAML BEFORE the expensive smoke
+    # run, so malformed config fails fast here instead of only surfacing at the
+    # live-query / browser step. This is the gate that would have caught Plan 3
+    # Finding 6 (the dataset:/path: blocker) before the warehouse work.
+    local oxy_bin="$HOME/.local/bin/oxy"
+    if [[ -x "$oxy_bin" ]]; then
+        if ( cd "$PROJECT_ROOT" && "$oxy_bin" validate ) >/dev/null 2>&1; then
+            log_ok "oxy validate: config files valid"
+        else
+            log_error "oxy validate failed — fix config/agent/view/topic YAML before the smoke run"
+            ( cd "$PROJECT_ROOT" && "$oxy_bin" validate ) 2>&1 | tail -20 >&2 || true
+            die "oxy config invalid"
+        fi
+    else
+        log_warn "oxy not found at $oxy_bin; skipping validate (run 03 first)"
+    fi
+
     # ---------- smoke mode ----------
     local mode="${SMOKE_MODE:-medium}"
     case "$mode" in

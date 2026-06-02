@@ -51,6 +51,13 @@ main() {
     check_duckdb_rows "main_gold.fct_smoke_test" || failures=$((failures + 1))
     check_duckdb_rows "main_admin.fct_pipeline_run_raw" || failures=$((failures + 1))
 
+    # ---------- live agent query (contract-level gate; methodology R1) ----------
+    # The checks above can ALL pass while the agent can't answer a thing
+    # (Plan 3 Finding 6: :3000 → 200, tables non-empty, yet every execute_sql
+    # failed). Ask the agent a real question THROUGH oxy and assert a numeric
+    # answer with the trust-contract shape comes back. This is the gate.
+    check_live_agent_query || failures=$((failures + 1))
+
     # ---------- AWS SG closed publicly (load-bearing, no longer optional) ----------
     # Iter 9 finding: the optional PUBLIC_IP check could be silently skipped
     # and the install could complete with :3000 internet-exposed. Now we
@@ -154,6 +161,43 @@ check_http() {
         log_error "$label: $url → $code (expected $expected)"
         return 1
     fi
+}
+
+# check_live_agent_query — contract-level gate (methodology rule R1).
+# Component checks can pass while the product is broken; this asks the Answer
+# Agent a canned question THROUGH oxy and asserts a real, trust-contract-shaped
+# answer returns (number + citations, no execute_sql error). Costs one Anthropic
+# call per install verify — cheap insurance against a green-but-broken box.
+check_live_agent_query() {
+    local oxy_bin="$HOME/.local/bin/oxy"
+    local q="how many 311 service requests are in the warehouse?"
+    if [[ ! -x "$oxy_bin" ]]; then
+        log_error "live agent query: oxy not found at $oxy_bin"
+        return 1
+    fi
+    # oxy needs ANTHROPIC_API_KEY (+ OXY_DATABASE_URL) from /etc/environment, and
+    # must run from the project root so it finds config.yml + the agent.
+    local out
+    out="$(
+        set -a
+        # shellcheck disable=SC1091
+        [[ -f /etc/environment ]] && . /etc/environment
+        set +a
+        cd "$PROJECT_ROOT" && "$oxy_bin" run agents/answer_agent.agent.yml "$q" 2>&1
+    )"
+    if echo "$out" | grep -qi "Error when calling execute_sql"; then
+        log_error "live agent query: execute_sql errored — warehouse unreachable THROUGH oxy"
+        log_error "(this is exactly the Plan 3 Finding 6 class: components green, queries broken)"
+        echo "$out" | grep -i "execute_sql" | head -3 >&2 || true
+        return 1
+    fi
+    if echo "$out" | grep -q "Citations:" && echo "$out" | grep -qE "Returned [0-9]"; then
+        log_ok "live agent query: agent answered with a number + citations (trust contract intact)"
+        return 0
+    fi
+    log_error "live agent query: no trust-contract answer returned (missing row count or citations)"
+    echo "$out" | tail -15 >&2 || true
+    return 1
 }
 
 # check_duckdb_rows TABLE — verify a DuckDB table has >0 rows.
