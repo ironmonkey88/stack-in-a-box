@@ -68,6 +68,19 @@ main() {
         die "Oxygen installer succeeded but $OXY_BIN_PATH not found or not executable"
     fi
 
+    # ---------- restart a running oxy.service onto the new binary ----------
+    # If this is a version upgrade on a live box, oxy.service is already running
+    # the OLD binary. Replacing the binary file does NOT swap the running
+    # process — it keeps the now-deleted inode open and holds an abnormal
+    # read-write lock on the DuckDB warehouse, blocking readers and a second
+    # `oxy run` (Plan 4 finding). Restart it so the new binary takes over and
+    # the stale lock is released. On a fresh install the unit doesn't exist yet
+    # (created in step 08), so this is a no-op.
+    if systemctl is-active --quiet oxy.service 2>/dev/null; then
+        log_info "oxy.service is running; restarting onto the new binary..."
+        sudo systemctl restart oxy.service || log_warn "oxy.service restart failed; restart manually"
+    fi
+
     verify_gate
 }
 
