@@ -17,6 +17,7 @@ The repo has a hierarchy of documents — read in this order:
 
 **Convictions (foundational, not authority):**
 - `PHILOSOPHY.md` — the principles the platform is built on. Working backwards, stages with verification, durability through metadata, honest reporting, trust contract, modular by design. Not operational — consult as a tiebreaker when a design question is open.
+- `METHODOLOGY.md` — distilled, reusable *rules* + architecture findings learned across oxygen-mvp ⇄ stack-in-a-box (e.g. "test the contract not just the components", "never use `%h` in a systemd system unit"), plus the Code-proposes/human-approves sync procedure that keeps the two repos' copies reconciled. Consult before a design call in case a rule already exists; add a rule here the moment a plan produces one.
 
 **Strategic + construction (authorities):**
 - `STANDARDS.md` — "done done" gates by medallion tier; sign-off checklists. The build's quality contract.
