@@ -3,9 +3,10 @@
 #
 # Idempotent: detects existing oxy and skips reinstall (unless FORCE=1).
 #
-# NOTE: this uses the latest release from get.oxy.tech by default. For
-# reproducible installs, pin a version when the template is published —
-# replace the curl URL with the versioned installer URL. See plan §5 Q4.
+# Pinned to a known-good Oxygen version (Plan 4). get.oxy.tech's installer
+# honors the OXY_VERSION env var (default `latest`); we pass the pin so installs
+# are reproducible. Override with OXY_VERSION=<tag> (or OXY_VERSION=latest) in
+# the environment to install something else.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,6 +15,9 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 readonly OXY_INSTALLER_URL="https://get.oxy.tech"
 readonly OXY_BIN_PATH="$HOME/.local/bin/oxy"
+# Plan 3 proved 0.5.54 on metal (docs/design/FIRST_INSTALL_FINDINGS.md); pin it.
+# Tag is unprefixed on github.com/oxy-hq/oxygen/releases.
+readonly OXY_VERSION_PIN="${OXY_VERSION:-0.5.54}"
 
 main() {
     log_step "03 — install Oxygen"
@@ -43,7 +47,8 @@ main() {
         # github.com/oxy-hq/oxygen/releases.
         # --connect-timeout / --max-time so a slow-but-reachable endpoint
         # fails loud instead of hanging the install indefinitely (dry-run F11).
-        if ! bash <(curl --proto '=https' --tlsv1.2 --connect-timeout 10 --max-time 120 -LsSf "$OXY_INSTALLER_URL"); then
+        log_info "requesting Oxygen version: $OXY_VERSION_PIN"
+        if ! OXY_VERSION="$OXY_VERSION_PIN" bash <(curl --proto '=https' --tlsv1.2 --connect-timeout 10 --max-time 120 -LsSf "$OXY_INSTALLER_URL"); then
             die "Oxygen installer failed (or timed out — check get.oxy.tech reachability)"
         fi
 
@@ -82,6 +87,18 @@ verify_gate() {
     else
         log_error "oxy --version failed"
         failures=$((failures + 1))
+    fi
+
+    # Pin assertion — the installed version must match the requested pin so a
+    # drifted/over-latest install fails loud instead of silently changing the
+    # proven version (Plan 4). Skipped when OXY_VERSION=latest was requested.
+    if [[ "$OXY_VERSION_PIN" != "latest" ]]; then
+        if "$OXY_BIN_PATH" --version 2>/dev/null | grep -q "$OXY_VERSION_PIN"; then
+            log_ok "oxy version matches pin: $OXY_VERSION_PIN"
+        else
+            log_error "oxy version does not match pin $OXY_VERSION_PIN (got: $($OXY_BIN_PATH --version 2>/dev/null | head -1))"
+            failures=$((failures + 1))
+        fi
     fi
 
     # Note: we do NOT verify `oxy` is on PATH for new SSH sessions here.
