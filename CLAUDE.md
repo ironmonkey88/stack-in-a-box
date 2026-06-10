@@ -15,8 +15,11 @@ This file is Claude Code's contract with the project. It does three things:
 
 The repo has a hierarchy of documents — read in this order:
 
+**Reference standard (cross-repo, above the convictions):**
+- `APPROACH.md` — the **reference standard** for how we work: the durable, plain-language statement of principles (empathy/honesty/optimism; the trust contract; hypothesis-then-result; decide-then-build; the declarative/reconciliation posture) and the reasoning beneath them. Deliberately tool- and dataset-agnostic, so it is **identical in both `stack-in-a-box` and `oxygen-mvp`** (a cross-repo shared artifact, kept in sync Code-proposes / human-approves — the same posture `METHODOLOGY.md` uses). `PHILOSOPHY.md` and the operational docs below are the *specializations* that instance this standard for this repo. **Reconciliation:** when APPROACH.md and a more detailed doc disagree on a **principle**, APPROACH.md wins and the detailed doc is reconciled to it; when they disagree on **how something is currently done**, the operational doc wins. They answer different questions. Read once; consult when a design question is genuinely open or a doc seems to drift from the standard.
+
 **Convictions (foundational, not authority):**
-- `PHILOSOPHY.md` — the principles the platform is built on. Working backwards, stages with verification, durability through metadata, honest reporting, trust contract, modular by design. Not operational — consult as a tiebreaker when a design question is open.
+- `PHILOSOPHY.md` — the principles the platform is built on; this repo's specialization of `APPROACH.md` above. Working backwards, stages with verification, durability through metadata, honest reporting, trust contract, modular by design. Not operational — consult as a tiebreaker when a design question is open.
 - `METHODOLOGY.md` — distilled, reusable *rules* + architecture findings learned across oxygen-mvp ⇄ stack-in-a-box (e.g. "test the contract not just the components", "never use `%h` in a systemd system unit"), plus the Code-proposes/human-approves sync procedure that keeps the two repos' copies reconciled. Consult before a design call in case a rule already exists; add a rule here the moment a plan produces one.
 
 **Strategic + construction (authorities):**
