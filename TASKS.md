@@ -19,6 +19,8 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 
 **Plan 4 (next)** — [ ] Retroactive Oxygen `0.5.54` pin in `03_install_oxygen.sh` (decision #4). Add the gates Finding 6 exposed: `oxy validate` (backlog B1) + an "agent answers a real query" check in `run.sh`/step 10. Run a clean from-scratch install on a new box to confirm the corrected scripts. Then backlog B/C/D.
 
+**Plan 5 done 2026-06-10** — [x] APPROACH.md cross-repo reference standard (documentation-only; landed off `main` in parallel with the in-flight Plan 4). New `APPROACH.md` at repo root — plain-language "how we build" (empathy/honesty/optimism, trust contract, hypothesis-then-result, decide-then-build, declarative/reconciliation), tool/dataset-agnostic, **byte-identical to oxygen-mvp's** (`diff` clean; oxygen-mvp Plan 47 / this repo Plan 5). Sits above PHILOSOPHY.md (this repo's specialization). Wiring: CLAUDE.md reading hierarchy gains a "Reference standard (cross-repo, above the convictions)" tier with the reconciliation rule; **new `session-starter.md`** created (this repo had none) per Gordon's direction, carrying the Chat-side APPROACH/PHILOSOPHY/METHODOLOGY pointers. Canonical body delivered Chat-side + an aligned Google Doc; Gordon approved a merge (pasted body's reconciliation closer + the Doc's newcomer intro line). PHILOSOPHY.md + METHODOLOGY.md read in full → compatible (contradiction halt did not fire). Prompt+report at `docs/prompts/plan-05-approach-reference-standard.{md,report.md}`.
+
 ---
 
 ## Plans Registry (cross-reference with LOG.md)
@@ -28,6 +30,7 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 | 1 | done | Decisions resolved + dry-run polish + shellcheck — Session 1, 2026-05-27 |
 | 2 | done (slice; B/C/D deferred) | Second batch contract-critical slice — 16 artifacts + F6 contract, static-verified — Session 2, 2026-05-28 |
 | 3 | done | First install on metal — 10 steps green, F6 proven, 6 fixes, Oxygen 0.5.54 — Session 3, 2026-05-29 |
+| 5 | done | APPROACH.md cross-repo reference standard + CLAUDE.md tier + new session-starter.md — doc-only, off `main` parallel to in-flight Plan 4 — 2026-06-10 |
 
 ---
 
