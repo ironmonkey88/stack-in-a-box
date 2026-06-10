@@ -160,11 +160,13 @@ The verbatim prompt above is reproduced as received. Four things were resolved
 in-session and are recorded here so this lineage file is self-contained.
 
 1. **Plan numbers.** Resolved against each repo's Plans Registry at fire time:
-   - `oxygen-mvp` → **Plan 47** (41/42/45 reserved-active, 46 highest used).
+   - `oxygen-mvp` → **Plan 48** (initially landed as Plan 47, then renumbered
+     47 → 48 after a collision was found with the older open PR #76 there which
+     had the prior claim on 47).
    - `stack-in-a-box` → **Plan 5** (Plans 1–3 done; **Plan 4 is already
      reserved/in-flight** as `claude/plan-04-pin-gates-lockaware` — the
      retroactive Oxygen-version pin — so 4 was not free). Neither was ambiguous,
-     so the plan-number halt condition did not fire.
+     so the plan-number halt condition did not fire here.
 
 2. **Canonical body delivery.** The "Canonical content" section above is a
    placeholder — the attachment it points to was not delivered with the prompt.

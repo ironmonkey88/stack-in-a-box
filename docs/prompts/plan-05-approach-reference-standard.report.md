@@ -2,10 +2,10 @@
 
 **Status:** complete
 **Date:** 2026-06-10
-**Repo:** `stack-in-a-box` (Plan 5) · sibling `oxygen-mvp` (Plan 47)
+**Repo:** `stack-in-a-box` (Plan 5) · sibling `oxygen-mvp` (Plan 48)
 **Prompt:** [`plan-05-approach-reference-standard.md`](plan-05-approach-reference-standard.md)
 **PR (this repo):** https://github.com/ironmonkey88/stack-in-a-box/pull/8
-**PR (sibling):** https://github.com/ironmonkey88/oxygen-mvp/pull/78
+**PR (sibling):** https://github.com/ironmonkey88/oxygen-mvp/pull/78 (landed as "Plan 47", then renumbered 47 → 48 via a follow-up PR after a collision with oxygen-mvp's older open PR #76)
 
 ---
 
@@ -36,8 +36,9 @@ standard.
 
 - **Plan numbers** — this repo **5** (Plans 1–3 done; **Plan 4 already
   reserved/in-flight** as `claude/plan-04-pin-gates-lockaware`, the Oxygen
-  version pin — so 4 was not free); sibling oxygen-mvp **47**. Not ambiguous;
-  plan-number halt did not fire.
+  version pin — so 4 was not free); sibling oxygen-mvp **48** (it landed as 47
+  then renumbered 47 → 48 after a collision with its older open PR #76). Not
+  ambiguous here; plan-number halt did not fire.
 - **Branch base** — created off `origin/main`, independent of and parallel to
   the unmerged Plan 4 branch. Plan 5 is documentation-only and does not depend
   on Plan 4; the registry row notes the parallel state.
