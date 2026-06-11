@@ -21,6 +21,8 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 
 **Plan 5 done 2026-06-10** — [x] APPROACH.md cross-repo reference standard (documentation-only; landed off `main` in parallel with the in-flight Plan 4). New `APPROACH.md` at repo root — plain-language "how we build" (empathy/honesty/optimism, trust contract, hypothesis-then-result, decide-then-build, declarative/reconciliation), tool/dataset-agnostic, **byte-identical to oxygen-mvp's** (`diff` clean; oxygen-mvp Plan 48 — landed as 47 then renumbered after a collision with its older open PR #76 / this repo Plan 5). Sits above PHILOSOPHY.md (this repo's specialization). Wiring: CLAUDE.md reading hierarchy gains a "Reference standard (cross-repo, above the convictions)" tier with the reconciliation rule; **new `session-starter.md`** created (this repo had none) per Gordon's direction, carrying the Chat-side APPROACH/PHILOSOPHY/METHODOLOGY pointers. Canonical body delivered Chat-side + an aligned Google Doc; Gordon approved a merge (pasted body's reconciliation closer + the Doc's newcomer intro line). PHILOSOPHY.md + METHODOLOGY.md read in full → compatible (contradiction halt did not fire). Prompt+report at `docs/prompts/plan-05-approach-reference-standard.{md,report.md}`.
 
+**Plan 6 done 2026-06-10** — [x] PHILOSOPHY.md creed (Prompt B). Added the empathy/honesty/optimism creed as an unnumbered framing section near the top of `PHILOSOPHY.md`, consistent with APPROACH.md (Plan 5). Light cross-references: empathy → §1's facts-vs-answers point, honesty → §4/§6, optimism → the one new idea (a complaint/incident feed inherits a negativity bias by construction; correcting it is honest reporting, not editorializing). Generic/dataset-agnostic; §1–§7 unchanged (additive, single-hunk diff). No system-humanism / Sensemake content (those are Plan 7's METHODOLOGY work). Prompt+report at `docs/prompts/plan-06-philosophy-creed.{md,report.md}`.
+
 ---
 
 ## Plans Registry (cross-reference with LOG.md)
@@ -31,6 +33,7 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 | 2 | done (slice; B/C/D deferred) | Second batch contract-critical slice — 16 artifacts + F6 contract, static-verified — Session 2, 2026-05-28 |
 | 3 | done | First install on metal — 10 steps green, F6 proven, 6 fixes, Oxygen 0.5.54 — Session 3, 2026-05-29 |
 | 5 | done | APPROACH.md cross-repo reference standard + CLAUDE.md tier + new session-starter.md — doc-only, off `main` parallel to in-flight Plan 4 — 2026-06-10 |
+| 6 | done | PHILOSOPHY.md creed (empathy/honesty/optimism) — additive framing section, §1–§7 unchanged — 2026-06-10 |
 
 ---
 
