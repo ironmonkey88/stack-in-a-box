@@ -23,6 +23,8 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 
 **Plan 6 done 2026-06-10** — [x] PHILOSOPHY.md creed (Prompt B). Added the empathy/honesty/optimism creed as an unnumbered framing section near the top of `PHILOSOPHY.md`, consistent with APPROACH.md (Plan 5). Light cross-references: empathy → §1's facts-vs-answers point, honesty → §4/§6, optimism → the one new idea (a complaint/incident feed inherits a negativity bias by construction; correcting it is honest reporting, not editorializing). Generic/dataset-agnostic; §1–§7 unchanged (additive, single-hunk diff). No system-humanism / Sensemake content (those are Plan 7's METHODOLOGY work). Prompt+report at `docs/prompts/plan-06-philosophy-creed.{md,report.md}`.
 
+**Plan 7 done 2026-06-10** — [x] METHODOLOGY.md R5–R8 (Prompt C). Added the reasoning/build disciplines in the existing Rule/Origin/Sync form: R5 hypothesis/result two-tier gate (Sensemake), R6 manufacture operator expertise behind a constrained agent surface (system-humanism build half — conviction half stays in PHILOSOPHY.md; R6 is the destination of oxygen-mvp's deferred split), R7 declarative/desired-state + reconciliation, R8 idempotent specs (split from R7). Origin = design session 2026-06-10 ratified by Gordon, not yet exercised in a plan; Sync = `stack-only` with matching Pending-propagation rows. R1–R4 unchanged (verified by diff); a framing line distinguishes field-experience rules (R1–R4) from design-ratified disciplines (R5–R8). Prompt+report at `docs/prompts/plan-07-methodology-reasoning-rules.{md,report.md}`.
+
 ---
 
 ## Plans Registry (cross-reference with LOG.md)
@@ -34,6 +36,7 @@ The dependency chain below is the corrected ordering after Plan 1's dry-run surf
 | 3 | done | First install on metal — 10 steps green, F6 proven, 6 fixes, Oxygen 0.5.54 — Session 3, 2026-05-29 |
 | 5 | done | APPROACH.md cross-repo reference standard + CLAUDE.md tier + new session-starter.md — doc-only, off `main` parallel to in-flight Plan 4 — 2026-06-10 |
 | 6 | done | PHILOSOPHY.md creed (empathy/honesty/optimism) — additive framing section, §1–§7 unchanged — 2026-06-10 |
+| 7 | done | METHODOLOGY.md R5–R8 reasoning/build disciplines — R1–R4 unchanged, 4 new `stack-only` rules + propagation rows — 2026-06-10 |
 
 ---
 
