@@ -6,6 +6,18 @@ The principles below are properties of any honest data platform, not specific to
 
 ---
 
+## The creed — empathy, honesty, optimism
+
+Three words name the conviction the numbered principles below implement — the same creed the reference standard carries:
+
+- **Empathy.** The answer has to fit the person asking and their situation; context is part of being correct, not a nicety. This is the *facts-vs-answers* point in §1 — an answer carries the question's context, a fact doesn't.
+- **Honesty.** Every answer carries its evidence, and the platform says plainly what it cannot show. Honesty is the rule the other two answer to — it is carried by §4 (honest reporting) and §6 (the trust contract).
+- **Optimism.** A platform built on incident and complaint feeds inherits a negativity bias *by construction* — its source data is mostly a record of problems. Correcting that bias by deliberately surfacing genuine progress is part of honest reporting, not editorializing; optimism here is earned — a conclusion the evidence supports, never a mood applied on top.
+
+These are properties of any honest data platform; the numbered principles that follow are how it implements them.
+
+---
+
 ## §1 — Working backwards from real problems
 
 The platform's first move is not "what data do we have?" It's "what report do you want, who's reading it, what decision does it inform for them?"
