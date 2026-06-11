@@ -47,6 +47,8 @@ This file is the **home of record** for both the rules *and* the procedure that 
 
 ## Rules
 
+*R1–R4 are install/infra-operational rules drawn from field experience (a plan hit them). R5–R8 are reasoning/build disciplines drawn from design — ratified, but not yet exercised in a plan; their Origin says so.*
+
 ### R1 — Test the contract, not just the components
 **Rule:** A verify suite that checks components (port open, service active, file present) can pass *while the actual product is broken*. Every install/CI gate must include at least one end-to-end check that exercises the real contract — e.g. ask the agent a canned question and assert a real answer returns, not just `:3000 → 200`.
 **Origin:** stack-in-a-box, Plan 3 (Finding 6 — the `dataset:`/`path:` blocker made every agent query fail while steps 00–10 stayed green).
@@ -67,6 +69,26 @@ This file is the **home of record** for both the rules *and* the procedure that 
 **Origin:** stack-in-a-box, Plan 3 / Plan 4 (NYC 311 SODA timeouts; `medium` failed, `small` clean).
 **Sync:** `n/a` for the SODA specifics (project-specific source), but the **attended-vs-unattended resilience principle** is general → consider for oxygen-mvp's own ingestion. Tag the principle `oxygen`-worth-reviewing, the SODA tuning `n/a`.
 
+### R5 — Hypothesis and result are separate tiers; the gate is at the lab door
+**Rule:** Run data-to-understanding as two labeled tiers. A **hypothesis** may be quick, rough, and reason ahead of full evidence — but it always wears the label "hypothesis." A **result** pays the full trust contract (SQL, row counts, citations, limitations). Promote hypothesis → result *only* by passing the evidence gate; if it can't pass, surface it as a stated open question — never strip the label and let it read as a finding. The looseness lives in the hypothesis tier's evidentiary *cost*, **never** in the labeling. This blocks the failure mode where frame-based/abductive reasoning (confidence scores, parallel hypotheses) launders speculation past verification by shedding its label before the reader sees it. Two tiers and not one strict gate, because both humans and LLMs given data with no frame either freeze or confabulate — the cheap labeled hypothesis tier is where exploration safely lives (a conjecture isn't held to publication standard).
+**Origin:** design session 2026-06-10, ratified by Gordon; not yet exercised in a plan. Basis: Klein's Data-Frame Theory. Maps onto the existing stack: the trust contract = peer review, the limitations registry = threats to validity.
+**Sync:** `stack-only` → carry to oxygen-mvp when its METHODOLOGY.md is instantiated.
+
+### R6 — Manufacture operator expertise into the product behind a constrained agent surface
+**Rule:** A product that works only with a human expert in the loop has been *operated*, not *built*. To make it stand without the operator, decompose that expertise and manufacture it into the product as three parts: (1) a domain-neutral **authored spine** — the standardized terms, joins, and structure the expert would otherwise supply by hand; (2) **structural verification** — tests and gates that hold what must stay true; (3) a **constrained agent surface** — the agent may act only within the rail the spine defines, never beyond it. Binding invariant that makes it safe: the constrained agent must not be able to emit output the structural verification can't check. (This is the build-discipline half of system humanism; the conviction half — human dignity/agency as the measure, dignity/privacy/honesty bounding the trade-off space — stays in PHILOSOPHY.md.)
+**Origin:** design session 2026-06-10, ratified by Gordon; not yet exercised in a plan. Load-bearing for the desktop/local-app MVP-0 concept, whose whole thesis is this rule applied.
+**Sync:** `stack-only` → carry to oxygen-mvp when its METHODOLOGY.md is instantiated.
+
+### R7 — Declarative/desired-state first; reconcile actual to desired
+**Rule:** State the desired end-state (the outcome plus the tests that prove it), not the imperative steps; let the build reconcile actual → desired. Treat the spec as a **standing description continuously enforced** (check → diff → execute), not a one-time instruction — that loop is reconciliation, and the tests + docs are its mechanism (they declare what must stay true and drive the system back on drift). Where actual diverges from desired on anything judgment-bearing, **report the diff and let a human decide** (the Code-proposes/human-approves posture). Do **not** over-rotate on declarative purity: it leaks at complexity and is imperative underneath — stay declarative in the data layer (specs, SQL, tests) and accept imperative control where the abstraction genuinely can't express the need. How declarative the agent surface can safely be tracks the executor's **capability-to-scope ratio**; a well-constrained, well-tested surface (R6's authored spine) raises that ratio, which is what lets a user state outcomes and trust the answer.
+**Origin:** design session 2026-06-10, ratified by Gordon; not yet exercised in a plan. Basis: desired-state infra (Kubernetes/Terraform reconciliation); Situational Leadership for the coaching-vs-directing/capability framing. Connects to R6 — the spine is what makes the surface safe to operate declaratively.
+**Sync:** `stack-only` → carry to oxygen-mvp when its METHODOLOGY.md is instantiated.
+
+### R8 — Keep desired-state specs idempotent
+**Rule:** Write every desired-state spec so applying it repeatedly equals applying it once. Idempotency is what makes reconciliation (R7) safe to re-run: re-applies, retries, and crash-recovery must converge to the same end-state without duplicating work or corrupting state. Build it in (merge-on-key, create-if-absent, check-before-write) rather than bolting it on — a spec that isn't idempotent can't be safely reconciled on a schedule or resumed after a mid-run failure.
+**Origin:** design session 2026-06-10, ratified by Gordon; not yet exercised in a plan. Split from R7 because idempotency is a distinct, separately-testable property. Basis: desired-state infra idempotency.
+**Sync:** `stack-only` → carry to oxygen-mvp when its METHODOLOGY.md is instantiated.
+
 ---
 
 ## Pending propagation (the to-do view)
@@ -77,5 +99,9 @@ This file is the **home of record** for both the rules *and* the procedure that 
 | R2 DuckDB contention pattern | stack → oxygen | Check oxygen for serve+refresh-on-one-file; share metric/threshold pattern | open |
 | R3 `%h` systemd trap | stack → oxygen | Inspect oxygen `oxy.service` for `%h` in a system unit | open |
 | R4 attended/unattended principle | stack → oxygen | Review oxygen ingestion against the principle (SODA specifics excluded) | open |
+| R5 hypothesis/result two-tier gate | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated | open |
+| R6 manufacture-expertise / constrained-agent surface | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated (the destination of oxygen-mvp's deferred system-humanism split) | open |
+| R7 declarative / desired-state / reconciliation | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated | open |
+| R8 idempotent specs | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated | open |
 
 *(When this file is instantiated in oxygen-mvp, this table is where oxygen-origin rules pending downward propagation to stack will also be tracked.)*
