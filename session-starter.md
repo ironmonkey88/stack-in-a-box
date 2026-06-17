@@ -43,6 +43,7 @@ Stack-in-a-Box is a reference implementation of a trustworthy data analytics pla
 | File | Purpose |
 |------|---------|
 | APPROACH.md | Cross-repo reference standard — how we work (read once) |
+| docs/design/APPROACH_DESIGN_REASONING.md | The reasoning *behind* APPROACH.md — why each choice was made and what was rejected (reconstructed breadcrumbs; consult when reconsidering a principle) |
 | CLAUDE.md | Instructions for Claude Code — how to build, how to orient a new user, how to close |
 | METHODOLOGY.md | Distilled reusable rules + the cross-repo sync procedure |
 | PHILOSOPHY.md | The principles the platform is built on |
