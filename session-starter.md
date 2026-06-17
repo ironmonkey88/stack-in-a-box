@@ -51,6 +51,7 @@ Stack-in-a-Box is a reference implementation of a trustworthy data analytics pla
 | PROMPTS.md | The prompt shape + 9-step receipt workflow |
 | LOG.md | Captain's log — how we got here |
 | TASKS.md | Task tracker — what's done, in progress, blocked |
+| docs/MIGRATION_SUMMARY.md | Cold-start handoff — read if restarting the project in a new account / fresh context (cross-repo, byte-identical to the sibling repo's copy) |
 
 Also worth pulling on demand: `docs/design/` (the design plan, dry-run findings, the resolved decisions), `docs/sessions/` (full session narratives), `docs/prompts/` (Chat-issued prompts + Code-issued reports), `docs/handoffs/`, and `docs/limitations/`.
 
