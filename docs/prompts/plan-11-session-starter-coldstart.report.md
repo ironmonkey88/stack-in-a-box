@@ -9,7 +9,7 @@
 | Repo | Plan | Branch | PR |
 |------|------|--------|----|
 | `stack-in-a-box` | **11** | `claude/plan-11-session-starter-coldstart` | [#15](https://github.com/ironmonkey88/stack-in-a-box/pull/15) |
-| `oxygen-mvp` | **51** | `claude/plan-51-session-starter-coldstart` | [#83](https://github.com/ironmonkey88/oxygen-mvp/pull/83) |
+| `oxygen-mvp` | **51** | `claude/plan-51-session-starter-coldstart` | [#84](https://github.com/ironmonkey88/oxygen-mvp/pull/84) |
 
 Slots resolved by boot-audit:
 - **stack-in-a-box:** tail = 10; Plan 4 reserved/in-flight → **11** next contiguous free.
