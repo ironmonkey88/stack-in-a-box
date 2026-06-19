@@ -178,39 +178,7 @@ unconstrained system (or an unconstrained AI) can offer a simple surface that
 *lies*; the simplicity is only legitimate when the constraints and tests beneath
 it make the answer trustworthy.
 
-## 7. Why the capability-to-scope law unifies several framings
-
-**Decision.** Recognize a single law behind several familiar ideas: the
-**altitude at which you can issue a command rises with the executor's
-capability-to-scope ratio.**
-
-**Why.** The same shape recurs in places usually treated as separate. Managing
-people: you *coach* a capable person ("here's the goal, you handle it") and
-*direct* an inexperienced one ("do this, then this") — Situational Leadership.
-Designing an agent surface: a well-constrained, well-tested spine (R6's authored
-guidance) raises the ratio, which is exactly what lets a user state outcomes and
-trust the answer rather than spell out steps. Seeing these as one law is what
-tells you the methodology's job: *raise the builder's capability so we can
-describe outcomes more often and dictate steps less often.* (Sources:
-`APPROACH.md` "How much to specify depends on the builder"; `METHODOLOGY.md` R7,
-which names the "capability-to-scope ratio" and ties it to Situational
-Leadership and R6's authored spine.)
-
-**Sourcing note (per the reconstruction discipline).** The *Situational
-Leadership* and *agent-surface* halves of this unification are directly supported
-by `APPROACH.md` and R7. The broader claim from the design session — that the
-**same** law also unifies hardware-abstraction layers and control-theory altitude
-— is recorded in the project's migration summary (`docs/MIGRATION_SUMMARY.md`
-§5/§8) but is only lightly attested in the named `APPROACH.md`/`METHODOLOGY.md`
-sources. It is preserved here as design-session reasoning, flagged as not fully
-recoverable from the core standard docs, for Gordon to confirm or refine.
-
-**Alternatives considered / rejected.** Keep coaching-vs-directing, abstraction
-layers, and control altitude as separate analogies — rejected because the value
-is in noticing the single isomorphism: once you see it as one ratio, "how much to
-specify" becomes a measurable design question rather than a case-by-case feel.
-
-## 8. Why R7 was split into R7 (reconciliation) and R8 (idempotency)
+## 7. Why R7 was split into R7 (reconciliation) and R8 (idempotency)
 
 **Decision.** Split the original declarative/desired-state rule into two:
 **R7** (declarative-first; reconcile actual → desired) and **R8** (keep
