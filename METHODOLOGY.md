@@ -47,7 +47,7 @@ This file is the **home of record** for both the rules *and* the procedure that 
 
 ## Rules
 
-*R1–R4 are install/infra-operational rules drawn from field experience (a plan hit them). R5–R8 are reasoning/build disciplines drawn from design — ratified, but not yet exercised in a plan; their Origin says so.*
+*R1–R4 are install/infra-operational rules drawn from field experience (a plan hit them). R5–R8 are reasoning/build disciplines drawn from design — ratified, but not yet exercised in a plan; their Origin says so. R9–R13 are pipeline-operations rules from a production instance's failure (wong-way-warehouse, 2026-11-18), approved by Gordon the same day.*
 
 ### R1 — Test the contract, not just the components
 **Rule:** A verify suite that checks components (port open, service active, file present) can pass *while the actual product is broken*. Every install/CI gate must include at least one end-to-end check that exercises the real contract — e.g. ask the agent a canned question and assert a real answer returns, not just `:3000 → 200`.
@@ -89,6 +89,31 @@ This file is the **home of record** for both the rules *and* the procedure that 
 **Origin:** design session 2026-06-10, ratified by Gordon; not yet exercised in a plan. Split from R7 because idempotency is a distinct, separately-testable property. Basis: desired-state infra idempotency.
 **Sync:** `stack-only` → carry to oxygen-mvp when its METHODOLOGY.md is instantiated.
 
+### R9 — Raw reflects the source; problems in raw never fail a run
+**Rule:** Bronze keeps what the source sent, including its duplicates, nulls and odd shapes, so every bronze test is `severity: warn`: it records what the source did and never stops the pipeline. Silver decides what is true (current load, dedup, deletes) and its grain tests stay `error`. Never run the nightly build with `--fail-fast`: it cancels in-flight nodes (reported as ERROR, hiding the real one) and skips everything downstream of one bad row. Without it, a failure skips only its own dependents.
+**Origin:** wong-way-warehouse (a personal Postgres instance of this stack), 2026-11-18: a vendor API returned one record three times; a bronze uniqueness test failed, `--fail-fast` cancelled the build and every downstream output went stale. Note this stack's own run.sh already had the captured-exit pattern; the instance had drifted from it (see R13).
+**Sync:** `stack-only` → **propagate to oxygen-mvp** (check its build flags and bronze test severities).
+
+### R10 — Bronze is append-by-load and self-cleansing
+**Rule:** Tag every bronze row with the load that brought it (dlt `_dlt_load_id`, or the landed file's name). Load with delete-insert on the load key (dlt `merge` + `merge_key`), so a rerun or a half-finished load of the same pull replaces itself. Judge each load on arrival (not empty; not much smaller than recent loads for a snapshot source) in an admin load-audit table, and have silver read only the newest *good* load. A bad load is kept, flagged and expires with retention; the next good pull supersedes it with no human step. Keep a bounded history per source (e.g. the last 14 loads of a snapshot source) and the landed files forever, so everything is rebuildable. Pull incrementally where the API allows (a window plus overlap); otherwise one request per source per day, and never loop retries against a vendor.
+**Origin:** wong-way-warehouse, 2026-11-18 (pilot on one snapshot source: proven that a rerun replaces itself, a truncated pull is rejected and silver keeps the previous one, a tripled record comes out once).
+**Sync:** `stack-only` → propagate to oxygen-mvp.
+
+### R11 — Evidence before cause; diagnose where the evidence is
+**Rule:** When a run fails, collect the evidence on the machine that ran it, automatically, before anyone is alerted: the build's own artifact (`run_results.json`: first real failure, excluding skipped and cancelled nodes), disk, database reachability, each source's last success, and what changed since the last good run. Classify it against a short playbook (disk / transient / model_error / test_failure / source / gate / unknown), store the verdict in an admin table and make it the alert's text. Automatic action only where it is safe (one retry for a transient failure). Whoever triages quotes the verdict and never names a cause it doesn't show; a guess is labelled as one and never shipped as a fix. A new failure class becomes a playbook row.
+**Origin:** wong-way-warehouse, 2026-11-18: the cause took four rounds to find from a remote session that could only see one log line; two wrong guesses were made, and a fix for the first guess was shipped.
+**Sync:** `stack-only` → propagate to oxygen-mvp. Connects to R5 (a guess is the hypothesis tier and wears its label).
+
+### R12 — Hygiene is scheduled, not remembered
+**Rule:** Every run ends with a sweep: drop failure tables of tests that passed (only failing tests keep a table), drop orphaned relations that no dbt node or named tool owns (dbt never drops a deleted model's table), ANALYZE what was rebuilt, and record a database-health row (size, temp spill, relations per schema, disk). The host gets a daily disk check with an alert at 80%, capped logs, and a weekly sweep of unused container images and build cache (never volumes). Tune the database for the workload instead of running on defaults: per-role `work_mem`, `temp_file_limit` and timeouts for the build user.
+**Origin:** wong-way-warehouse, 2026-11-18: ~1,000 test tables (about 190 of them orphaned) in a 6 GB warehouse; default `work_mem` caused ~140 GB/day of temp-file churn on a shared 38 GB disk at 88%.
+**Sync:** `stack-only` → propagate to oxygen-mvp.
+
+### R13 — Audit each instance against the reference
+**Rule:** A reference stack's principles only protect the instances that still follow them. Periodically diff each instance's run script, build flags, test severities and standards against the reference, and treat a drift as a finding. When an instance learns something, write it back to the reference in the same week (this file is where it lands).
+**Origin:** wong-way-warehouse, 2026-11-18: the instance used `--fail-fast` although this stack's run.sh says "dbt tests don't halt the pipeline".
+**Sync:** `stack-only` → applies to every instance (oxygen-mvp, wong-way-warehouse).
+
 ---
 
 ## Pending propagation (the to-do view)
@@ -103,5 +128,10 @@ This file is the **home of record** for both the rules *and* the procedure that 
 | R6 manufacture-expertise / constrained-agent surface | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated (the destination of oxygen-mvp's deferred system-humanism split) | open |
 | R7 declarative / desired-state / reconciliation | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated | open |
 | R8 idempotent specs | stack → oxygen | Carry over when oxygen-mvp METHODOLOGY.md is instantiated | open |
+| R9 raw never fails a run / no fail-fast | stack → oxygen | Check oxygen's build flags and bronze test severities | open |
+| R10 append-by-load, self-cleansing bronze | stack → oxygen | Review oxygen's dlt write dispositions and silver load selection | open |
+| R11 diagnose where the evidence is | stack → oxygen | Add on-box diagnosis + playbook to oxygen's run | open |
+| R12 scheduled hygiene | stack → oxygen | Add the post-run sweep and host checks | open |
+| R13 instance drift audit | stack → all | Diff each instance against the reference periodically | open |
 
 *(When this file is instantiated in oxygen-mvp, this table is where oxygen-origin rules pending downward propagation to stack will also be tracked.)*
