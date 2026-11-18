@@ -38,3 +38,10 @@ models:
     admin:
       +schema: admin
       +materialized: table
+
+# Raw reflects the source and never fails a run (METHODOLOGY R9): tests on bronze record what the source did as
+# warnings; silver and gold tests stay errors. Applies to tests defined under models/bronze/.
+data_tests:
+  stack_in_a_box:
+    bronze:
+      +severity: warn

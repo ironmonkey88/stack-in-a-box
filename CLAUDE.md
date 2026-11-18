@@ -285,5 +285,6 @@ These accumulate over time as the project encounters them. The starter set cover
 - **`oxy.service` must have `Requires=docker.service` + `After=docker.service`.** Otherwise it races docker on reboot and crashes bringing up the postgres container.
 - **dbt-docs uses marked.js with `sanitize: true`.** Raw HTML in dbt model overview.md gets escaped. Use plain Markdown for back-links and styled elements.
 - **The bash safety hook fires *before* Claude Code's built-in auto-allow.** A command whose leading token would normally auto-allow (`ls`, `grep`, `cat`) gets hook-denied if the command string contains a hook-blocked operator. Don't use `command || fallback` thinking the auto-allow handles it.
+- **`dbt build --fail-fast` reports cancelled nodes as ERROR.** One real failure makes several unrelated tests "ERROR in 0.1 s"; the real one is elsewhere in the log. Don't use it for scheduled builds; read `run_results.json` for the first `fail`/`error` that isn't a skip (Plan 13, METHODOLOGY R9/R11; from a wong-way-warehouse incident, 2026-11-18).
 
 Future gotchas should land in this section as they're discovered, with the source named (which session / which plan).

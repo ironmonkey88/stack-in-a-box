@@ -27,7 +27,10 @@ Bronze is the arrival layer. The standard: every source has a discoverable shape
 - [ ] Bronze view `bronze.raw_<source>_<entity>` exists at the dbt layer, passing through the raw + audit columns.
 - [ ] schema.yml has model description + per-column descriptions for every analyst-relevant column.
 - [ ] Audit columns present and populated: `_extracted_at`, `_extracted_run_id`, `_first_seen_at` (for merge mode), `_source_endpoint`.
-- [ ] At least one bronze test that asserts the source contract (typically `unique` + `not_null` on the source's primary key).
+- [ ] At least one bronze test that asserts the source contract (typically `unique` + `not_null` on the source's primary key), **at `severity: warn`** and judged on the newest load. Raw reflects the source and never fails a run (METHODOLOGY R9); the test records what the source did.
+- [ ] **Append-by-load** (R10): every row carries its load (`_dlt_load_id` or the landed file's name); loads are delete-insert on that key (dlt `merge` + `merge_key`), so a rerun replaces itself; a bounded history is kept per source; the landed files are kept for rebuilds.
+- [ ] **Arrival audit per load** (R10): the admin load-audit table judges every load (not empty; for a snapshot source, not much smaller than recent loads) and names the current load. A rejected newest load raises a warning, not a failure.
+- [ ] Pulls are incremental where the API allows (window + overlap); otherwise one request per source per day; retries only for transient errors, with backoff, never in a loop.
 - [ ] Source-shape limitations documented in `docs/limitations/<source>-<aspect>.md` and surfaced in the limitations index.
 
 ---
@@ -45,7 +48,9 @@ Silver is the cleanup layer. The standard: every silver model is one row per bus
 - [ ] At least one silver test that asserts the grain (unique on primary key, not_null on grain columns).
 - [ ] Any silver-specific limitations documented (cross-wave drift, source DQ issues that survive into silver, etc.).
 
-> **Status note:** silver-tier standards are still developing — this section will fill out as the project accumulates silver models. The structural shape above is the minimum; specific patterns (k-anonymity gates, suppression logic, dedup discipline) will be added as the work surfaces them.
+- [ ] **Dedup discipline** (R9/R10): silver reads the current good load of each bronze source (one shared macro, never the raw table directly), collapses repeats the source sent (`DISTINCT ON (key) … ORDER BY key, load DESC` in Postgres, `QUALIFY row_number()` in DuckDB), and applies the source's deletes. Its grain test is `error`: a duplicate that survives silver is our bug, not the source's.
+
+> **Status note:** silver-tier standards are still developing — this section will fill out as the project accumulates silver models. The structural shape above is the minimum; further patterns (k-anonymity gates, suppression logic) will be added as the work surfaces them.
 
 ---
 
@@ -77,6 +82,9 @@ Admin is the observability layer. The standard: the warehouse audits itself.
 - [ ] `fct_data_profile` regenerated on schema changes (column distributions snapshot).
 - [ ] `fct_test_run` appended from `dbt/target/run_results.json` after every `dbt test` invocation.
 - [ ] `dim_data_quality_test` catalogues the test definitions + baseline expectations.
+- [ ] `fct_load_audit`: one row per bronze load, with its verdict and which load silver reads (R10).
+- [ ] `fct_run_diagnosis`: on any run that is not `ok`, the classified cause, the evidence and the next action (R11).
+- [ ] `fct_db_health`: one row per run: database size, temp spill, relations per schema, disk, orphans found (R12).
 - [ ] All admin tests pass (the DQ drift guardrail and the test-run integrity tests).
 
 The admin tier is the project's audit trail. If the warehouse can't tell you when it last refreshed and what its DQ status was, the discipline is broken.
@@ -156,7 +164,21 @@ LOG.md and TASKS.md are load-bearing. They drift if not maintained.
 
 ---
 
-## 11. Sign-off checklists
+## 11. Operations standards (pipeline runs)
+
+The run is unattended; these gates make it survive bad data and bad days without a human (METHODOLOGY R9–R12).
+
+- [ ] **Outcome vocabulary** in `fct_pipeline_run_raw.run_status`: `ok`; `partial` (ran end to end, something to fix: a pull, a load, a stale source, a silver/gold test or model); `failed` (the build could not run at all). Every stage keeps going; only a build that cannot start ends the run early.
+- [ ] **No `--fail-fast`** on the scheduled build; a failure skips only its dependents.
+- [ ] **Diagnosis on failure** (R11): before any alert, a script on the machine that ran the build reads `run_results.json`, disk, database reachability, each source's last success and the commits since the last good run, classifies the cause (disk / transient / model_error / test_failure / source / gate / unknown) and writes `fct_run_diagnosis`. The alert text is that verdict.
+- [ ] **Playbook:** one row per class: the automatic action (only where safe: one retry for transient) and what the human gets. A new failure class adds a row.
+- [ ] **Hygiene** (R12): every run drops passing tests' failure tables and orphaned relations, ANALYZEs rebuilt tables and writes `fct_db_health`; the host has a daily disk check (alert at 80%), capped logs and a weekly image/build-cache sweep (never volumes).
+- [ ] **Database baseline** (Postgres variant): the build role has its own `work_mem` (32–64 MB), `temp_file_limit` (a fraction of free disk), `statement_timeout` and `idle_in_transaction_session_timeout`; the reader role is read-only with a short timeout; `random_page_cost` ~1.1 on SSD; `log_temp_files` on. Set per role, so nothing else on a shared box changes.
+- [ ] **Drift audit** (R13): each instance's run script, build flags and test severities are compared with this reference periodically.
+
+---
+
+## 12. Sign-off checklists
 
 > Sign-off checklists land here as the project accumulates MVP milestones. The first will be **Plan 1 sign-off** (shellcheck pass + first real install). The structure of an MVP sign-off:
 >
