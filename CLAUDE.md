@@ -160,34 +160,10 @@ The hook fires *before* Claude Code's built-in auto-allow — even a command who
 
 ## §6 — Naming standards
 
-### Schemas
-
-| Schema | Purpose |
-|---|---|
-| `bronze` | Raw source data — arrival shape, minimal cleanup. |
-| `silver` | Cleaned, typed, PII-redacted. |
-| `gold` | Business-ready facts + dims. |
-| `admin` | Pipeline + DQ observability. |
-
-### Table prefixes
-
-| Prefix | Schema | Example |
-|---|---|---|
-| `raw_` | bronze | `raw_<source>_<entity>` |
-| `stg_` | silver | `stg_<source>_<entity>` |
-| `fct_` | gold | `fct_<entity>` |
-| `dim_` | gold | `dim_<entity>` |
-| `fct_` | admin | `fct_pipeline_run_raw`, `fct_data_profile`, `fct_test_run` |
-
-### Column conventions
-
-- Snake case everywhere: `request_type`, `opened_dt`.
-- Primary keys: `<table>_id` e.g. `request_id`.
-- Surrogate keys: `<table>_sk`.
-- Dates/timestamps: `_dt` suffix (date) / `_ts` suffix (timestamp).
-- Booleans: `is_` prefix.
-- Percentages: `pct_` prefix.
-- Counts: `_count` suffix.
+Moved to [`NAMING.md`](NAMING.md) (Plan 14, 2026-11-19). The standard is the wong-way-warehouse convention:
+`<source>_<entity>` in bronze and silver (no `raw_`/`stg_`), `fct_`/`dim_`/`bridge_` in gold, `_key` surrogate keys,
+`_date`/`_at` time columns, unit suffixes, and `ok/suspect/invalid/missing` quality flags. Read it before generating
+anything (METHODOLOGY R14). This repo's smoke model `raw_nyc_311` is a known exception, tracked in TASKS.md.
 
 ---
 

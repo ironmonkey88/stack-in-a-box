@@ -114,6 +114,34 @@ This file is the **home of record** for both the rules *and* the procedure that 
 **Origin:** wong-way-warehouse, 2026-11-18: the instance used `--fail-fast` although this stack's run.sh says "dbt tests don't halt the pipeline".
 **Sync:** `stack-only` → applies to every instance (oxygen-mvp, wong-way-warehouse).
 
+
+*R14–R18 are agent-build disciplines adopted 2026-11-19 from two outside write-ups (GoDaddy's pipeline-creation agent, and lelouvincx's zero-dollar data stack) and wong-way-warehouse's "Yu Bei" new-source flow. Gordon approved them the same day. Not yet exercised in a plan.*
+
+### R14 — Standards before generating
+**Rule:** An agent reads the naming standard (`NAMING.md`), the quality gates (`STANDARDS.md`) and the instance's binding context file *before* it writes any model, pipeline or column. It does not generate first and check for violations afterwards. Put the standards in the agent's early context so the first draft complies. A generate-then-fix loop costs extra commits and review cycles, and misses whatever the check doesn't cover.
+**Origin:** GoDaddy's data-pipeline agent: naming compliance on the first pass only arrived once its specialists queried the standards before generating. Adopted 2026-11-19.
+**Sync:** `stack-only` → propagate to oxygen-mvp and every instance.
+
+### R15 — Cross-check every new number against raw SQL
+**Rule:** Before a new metric or silver model is called done, recompute at least one count and one total straight from bronze with plain SQL and compare them to the modelled result. Explain any difference, or fix it. Keep the check as a singular dbt test (a reconciliation or known-answer test) so it runs on every build.
+**Origin:** lelouvincx's zero-dollar data stack: a plain-SQL cross-check found one tool's community share was 85% when the correct figure was 0.2% (hidden org membership plus an automation account). wong-way-warehouse already does this as silver→gold reconciliation and known-answer tests. Adopted 2026-11-19.
+**Sync:** `stack-only` → propagate to oxygen-mvp.
+
+### R16 — One classification rule, one macro
+**Rule:** Any rule that classifies rows and feeds more than one model or metric (who counts as core team; whether the watch was being worn; what counts as a workout) lives in exactly one macro or one silver model. Everything else reads it there. A fix in one place then fixes every metric that depends on it. Never copy the CASE expression into a second model.
+**Origin:** lelouvincx's zero-dollar data stack (`author_type()` macro). Adopted 2026-11-19.
+**Sync:** `stack-only` → propagate to oxygen-mvp.
+
+### R17 — Snapshot what the source forgets, from day one
+**Rule:** If a source only reports its current state (balances, counts, statuses, star totals), history exists only from the first day you snapshot it. Add a dbt snapshot, or an append-by-load bronze table (R10), when the source is added, not when someone first asks for a trend.
+**Origin:** lelouvincx's zero-dollar data stack: star history begins when the pipeline first ran. Adopted 2026-11-19.
+**Sync:** `stack-only` → propagate to oxygen-mvp.
+
+### R18 — New sources: ask first, build once, one order per source
+**Rule:** Adding a source is a conversation, then one build. (1) Intake: who uses it and for what question, how it arrives, the credential *file* (never the secret), freshness, grain and natural key, timezones, sensitivity, quirks. All questions in one batch. (2) Look at real data and agree the names (R14). (3) Write it as one work order, and build it from a checklist that lives in the instance's repo, copying the closest existing source rather than inventing a pattern. (4) Verify on real data, including R15, before calling it done. Report an honest `partial` if verification couldn't run. Fixes are later commits under the same order, never a second order. Narrow agents per job (new source vs. schema change) beat one large agent.
+**Origin:** GoDaddy's pipeline agent (conversational intake, one PR per run, narrow specialist agents), adapted as wong-way-warehouse's Yu Bei flow (`docs/yu-bei.md`, `yb-` orders in ORDERS.md), 2026-11-19.
+**Sync:** `stack-only` → instance: wong-way-warehouse (adopted). Propagate to oxygen-mvp.
+
 ---
 
 ## Pending propagation (the to-do view)
@@ -133,5 +161,10 @@ This file is the **home of record** for both the rules *and* the procedure that 
 | R11 diagnose where the evidence is | stack → oxygen | Add on-box diagnosis + playbook to oxygen's run | open |
 | R12 scheduled hygiene | stack → oxygen | Add the post-run sweep and host checks | open |
 | R13 instance drift audit | stack → all | Diff each instance against the reference periodically | open |
+| R14 standards before generating | stack → all | Point each instance's CLAUDE.md at NAMING/STANDARDS before generation | open |
+| R15 raw-SQL cross-check | stack → oxygen | Add a reconciliation / known-answer test per gold metric | open |
+| R16 one rule, one macro | stack → oxygen | Audit duplicated CASE classifications | open |
+| R17 snapshot from day one | stack → oxygen | List state-only sources; add snapshots | open |
+| R18 new-source intake → order → build | stack → oxygen | Adopt an intake + order flow (wong-way-warehouse: done, docs/yu-bei.md) | open |
 
 *(When this file is instantiated in oxygen-mvp, this table is where oxygen-origin rules pending downward propagation to stack will also be tracked.)*
