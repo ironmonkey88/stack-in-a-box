@@ -7,6 +7,8 @@
 
 ## Next Focus
 
+- [ ] Rename smoke model `raw_nyc_311` to the NAMING.md convention (`nyc_311_requests`), with run.sh, tests and verify gates (Plan 14 exception)
+
 The dependency chain below is the corrected ordering after Plan 1's dry-run surfaced that a first install is impossible until the second batch ships (script 05 dies at missing `config.example.yml`). The actual chain is: decisions → second batch → shellcheck → first install. Shellcheck folds into Plan 1 (it's a fast pre-second-batch win against the existing scripts).
 
 **Plan 1 done 2026-05-27** — [x] Decisions resolved + dry-run polish + shellcheck pass. All 5 open decisions in [`docs/design/OPEN_DECISIONS.md`](docs/design/OPEN_DECISIONS.md) RESOLVED; honesty disconnects fixed (CLAUDE.md §1 "Current install state" caveat, design plan §8 reframe, script 05 real repo URL); 13 v4 scripts pass shellcheck; flow-level dry-runs in [`docs/design/FLOW_DRY_RUN_FINDINGS.md`](docs/design/FLOW_DRY_RUN_FINDINGS.md).
