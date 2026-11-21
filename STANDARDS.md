@@ -37,7 +37,10 @@ Bronze is the arrival layer. The standard: every source has a discoverable shape
 
 ## 3. Silver tier standards
 
-Silver is the cleanup layer. The standard: every silver model is one row per business entity, type-clean, PII-redacted, with a documented curation discipline.
+Silver is the warehouse proper (METHODOLOGY R19): cleansed and related like a relational database. The standard: every silver model is at detail grain, type-clean, deduped, PII-redacted, quality-flagged (`ok/suspect/invalid/missing`), keyed, and tied to conformed dimensions, with a documented curation discipline.
+
+- [ ] Conformed dimensions (date, place/geography, person, category) live in silver and every silver fact carries their keys, with `relationships` tests.
+- [ ] A quality column on every model with rule logic, `accepted_values` ok/suspect/invalid/missing, and a unit test per rule.
 
 - [ ] Silver model `silver.stg_<source>_<entity>` at `dbt/models/silver/stg_<source>_<entity>.sql`.
 - [ ] Materialization: `table` (silver default per dbt_project.yml).
@@ -56,7 +59,10 @@ Silver is the cleanup layer. The standard: every silver model is one row per bus
 
 ## 4. Gold tier standards
 
-Gold is the business-ready layer. The standard: every gold model is analyst-facing, fully tested, and consumable through the semantic layer.
+Gold is the easy-to-use layer (METHODOLOGY R19): marts shaped for their readers, detail allowed, aggregated where performance or ease asks for it; metrics in the semantic layer are "gold plus". Knowledge products read gold forward, through the semantic layer where a metric exists (R20). The standard: every gold model is consumer-facing, fully tested, and consumable through the semantic layer.
+
+- [ ] Silver → gold reconciliation (a singular test) and at least one known-answer test per mart (R15).
+- [ ] Plausibility bounds on every measure.
 
 - [ ] Gold model at `dbt/models/gold/{fct,dim}_<entity>.sql`.
 - [ ] Materialization: `table`.

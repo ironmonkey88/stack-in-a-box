@@ -115,7 +115,7 @@ This file is the **home of record** for both the rules *and* the procedure that 
 **Sync:** `stack-only` → applies to every instance (oxygen-mvp, wong-way-warehouse).
 
 
-*R14–R18 are agent-build disciplines adopted 2026-11-19 from two outside write-ups (GoDaddy's pipeline-creation agent, and lelouvincx's zero-dollar data stack) and wong-way-warehouse's "Yu Bei" new-source flow. Gordon approved them the same day. Not yet exercised in a plan.*
+*R19–R22 are Gordon's 2026-11-20 decisions on layers, consumers, separation and sourcing; R14–R18 are agent-build disciplines adopted 2026-11-19 from two outside write-ups (GoDaddy's pipeline-creation agent, and lelouvincx's zero-dollar data stack) and wong-way-warehouse's "Yu Bei" new-source flow. Gordon approved them the same day. Not yet exercised in a plan.*
 
 ### R14 — Standards before generating
 **Rule:** An agent reads the naming standard (`NAMING.md`), the quality gates (`STANDARDS.md`) and the instance's binding context file *before* it writes any model, pipeline or column. It does not generate first and check for violations afterwards. Put the standards in the agent's early context so the first draft complies. A generate-then-fix loop costs extra commits and review cycles, and misses whatever the check doesn't cover.
@@ -142,6 +142,27 @@ This file is the **home of record** for both the rules *and* the procedure that 
 **Origin:** GoDaddy's pipeline agent (conversational intake, one PR per run, narrow specialist agents), adapted as wong-way-warehouse's Yu Bei flow (`docs/yu-bei.md`, `yb-` orders in ORDERS.md), 2026-11-19.
 **Sync:** `stack-only` → instance: wong-way-warehouse (adopted). Propagate to oxygen-mvp.
 
+
+### R19 — Layers mean what Gordon means by them
+**Rule:** **Bronze** is raw: the source as it arrived. **Silver** is the warehouse proper: cleansed and *related*, like a relational database: typed, deduped, keys enforced, facts tied to conformed dimensions (date, place, person, request type…), quality-flagged, personal data removed, detail grain, not aggregated. **Gold** is the easy-to-use layer: marts shaped for the people and products that read them, pre-aggregated and rolled up where that helps. Gold may hold detail; aggregate only when performance asks for it. **Metrics** (the semantic layer: MetricFlow, ktx) stretch gold: call them "gold plus". A model that only renames or reshapes silver for convenience is gold; a model that fixes, relates or flags data is silver.
+**Origin:** Gordon, 2026-11-20, after the Civic Pulse review found its row-level facts labelled gold with no silver layer.
+**Sync:** `stack-only` → every instance. Each instance records where it diverges and the plan to converge.
+
+### R20 — Knowledge products read gold forward, preferably through the semantic layer
+**Rule:** Dashboards, write-ups, chat and MCP answers read gold or later, never bronze or silver. Where a metric exists, they use the semantic layer rather than SQL over gold tables, so every number has one definition. The goal is a semantic layer rich enough that direct access to gold can be closed (as Snowflake semantic views allow). Every number shown carries its lineage: the metric or query, the data date, the source.
+**Origin:** Gordon, 2026-11-20 (Wheelhouse, the Civic Pulse product for Councilor Ben Wheeler).
+**Sync:** `stack-only` → every instance.
+
+### R21 — One warehouse per domain; never co-mingle
+**Rule:** Each warehouse instance serves one domain and one audience, with its own database, credentials, repo and run. Public civic data (Civic Pulse, DuckDB) and personal data (wong-way-warehouse, Postgres) can share a host but never a database, a schema, a pipeline or a semantic layer. A cross-domain question is answered in the product layer, from each warehouse's published outputs.
+**Origin:** Gordon, 2026-11-20.
+**Sync:** `stack-only` → every instance.
+
+### R22 — Every new source starts from a stakeholder's question
+**Rule:** Sources are found by working backwards from questions a real user asks, not by collecting whatever is published. A research pass (the Thirsty Scholar skill) pushes existing data as far as it honestly goes, records where it runs out, and proposes sources that would close each gap, each verified at the source and scored value ÷ cost (value: questions unlocked and how actionable; cost: ingest, upkeep, quality risk). Gordon picks; each pick becomes one intake and one order (R18).
+**Origin:** Gordon, 2026-11-20 (the "thirsty analyst" research for Councilor Ben Wheeler).
+**Sync:** `stack-only` → every instance.
+
 ---
 
 ## Pending propagation (the to-do view)
@@ -166,5 +187,9 @@ This file is the **home of record** for both the rules *and* the procedure that 
 | R16 one rule, one macro | stack → oxygen | Audit duplicated CASE classifications | open |
 | R17 snapshot from day one | stack → oxygen | List state-only sources; add snapshots | open |
 | R18 new-source intake → order → build | stack → oxygen | Adopt an intake + order flow (wong-way-warehouse: done, docs/yu-bei.md) | open |
+| R19 layer meanings | stack → all | oxygen-mvp: add silver, move row-level facts there, gold names kept as views during the move; wong-way-warehouse: conformed dims and row-level facts sit in gold, review | open |
+| R20 gold-forward, semantic-first consumers | stack → all | oxygen-mvp: Wheelhouse reads gold via SQL today; move to metrics once ktx lands (CP-8) | open |
+| R21 one warehouse per domain | stack → all | Confirmed separate 2026-11-20 (Civic Pulse DuckDB, personal Postgres, same host) | done |
+| R22 question-first sourcing | stack → all | Thirsty Scholar skill (2026-11-20) | open |
 
 *(When this file is instantiated in oxygen-mvp, this table is where oxygen-origin rules pending downward propagation to stack will also be tracked.)*

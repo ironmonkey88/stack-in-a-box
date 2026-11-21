@@ -10,8 +10,8 @@ disagrees with this file, that's a drift finding (R13): fix the instance in its 
 | Schema | Holds | Written by |
 |---|---|---|
 | `bronze` | Each source exactly as it arrived, tagged with its load (R9, R10) | dlt |
-| `silver` | Typed, deduped, current-load, rules applied, quality flags, PII/coordinates removed | dbt |
-| `gold` | Star schema: facts, dimensions, bridges, metric tables | dbt |
+| `silver` | The warehouse proper (METHODOLOGY R19): typed, deduped, current-load, rules applied, quality flags, PII/coordinates removed, and related: keys, facts and conformed dimensions at detail grain | dbt |
+| `gold` | Easy to use: marts for readers, detail allowed, rolled up where it helps; metric tables from the semantic layer ("gold plus") | dbt |
 | `admin` | Run log, load audit, diagnosis, health, test results | dbt + run tools |
 
 Never create a new schema from a model. Schemas, and the grants on them, are declared in the server's database setup first.
@@ -21,7 +21,9 @@ Never create a new schema from a model. Schemas, and the grants on them, are dec
 | Layer | Pattern | Examples |
 |---|---|---|
 | bronze | `<source>_<entity>`, the dlt resource name. No prefix, because the schema already says bronze. | `weightgurus_operations`, `garmin_raw`, `gym_sessions` |
-| silver | `<source>_<entity>` for one source. A plain concept name when it merges sources. | `garmin_hrv`, `weight_weighins`, `daily_metric_values` |
+| silver (source-aligned) | `<source>_<entity>` for one source. A plain concept name when it merges sources. | `garmin_hrv`, `weight_weighins`, `daily_metric_values` |
+| silver (integrated, R19) | `fct_<grain or event>`, `dim_<entity>`, `bridge_<a>_<b>`: conformed dimensions and facts keyed to them | `dim_date`, `dim_ward`, `fct_311_request` |
+| gold marts | `mart_<audience or topic>_<grain>`, or `fct_`/`dim_` when gold re-exposes a silver star for readers |  `mart_wheelhouse_block_year` |
 | gold facts | `fct_<grain or event>` | `fct_daily_health`, `fct_activity_minute`, `fct_sleep_night` |
 | gold dimensions | `dim_<entity>` | `dim_date`, `dim_person`, `dim_place` |
 | gold bridges | `bridge_<a>_<b>` | `bridge_dish_ingredient` |
